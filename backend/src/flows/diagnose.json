@@ -1,0 +1,31 @@
+{
+  "command": "diagnose",
+  "triggers": { "en": ["diagnose"], "zh": ["诊断"] },
+  "closePolicy": "conversational",
+  "worker": { "skill": "diagnose-orchestrator" },
+  "steps": [
+    {
+      "id": "env",
+      "type": "choice",
+      "options": [
+        { "key": "qat", "i18n": { "en": "QAT", "zh": "QAT" } },
+        { "key": "uat", "i18n": { "en": "UAT", "zh": "UAT" } },
+        { "key": "prod", "i18n": { "en": "PROD", "zh": "PROD" } }
+      ],
+      "i18n": {
+        "title": { "en": "🌐  Select environment", "zh": "🌐  请选择环境" },
+        "note": { "en": "Step 1 of 2 · Environment", "zh": "第 1 / 2 步 · 环境" }
+      }
+    },
+    {
+      "id": "branch",
+      "type": "input",
+      "default": "main",
+      "i18n": {
+        "title": { "en": "🌿  Enter branch", "zh": "🌿  输入分支" },
+        "note": { "en": "Step 2 of 2 · Branch", "zh": "第 2 / 2 步 · 分支" }
+      }
+    }
+  ],
+  "feedback": { "enabled": false }
+}
