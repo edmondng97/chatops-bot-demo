@@ -34,11 +34,29 @@ body {
 .timeline li:hover { transform: translateY(-2px); }
 .timeline li.active { border-color: var(--accent); color: var(--accent); }
 
-.chat { min-height: 320px; display: flex; flex-direction: column; gap: 12px; }
+/* scroll-driven chat: normal-flow log, each message animated by ScrollTrigger */
+.scrolly { position: relative; }
+.chat { min-height: 200px; display: flex; flex-direction: column; gap: 14px; }
+.scroll-progress { height: 4px; margin-top: 14px; background: var(--panel); border-radius: 999px; overflow: hidden; }
+.scroll-progress span { display: block; height: 100%; width: 0; background: var(--accent); box-shadow: 0 0 12px var(--accent); }
 .msg { max-width: 78%; padding: 10px 14px; border-radius: var(--radius); font-size: 14px; white-space: pre-wrap; }
+/* Reduced-motion / no-GSAP fallback: everything visible */
+body.no-anim #chat .msg { opacity: 1 !important; visibility: visible !important; }
 .msg.user { align-self: flex-end; background: #1f6feb33; border: 1px solid #1f6feb; }
 .msg.bot { align-self: flex-start; background: var(--bg); border: 1px solid var(--border); }
 .msg.card { align-self: flex-start; background: var(--bg); border: 1px solid var(--accent); }
 .msg.card .card-title { color: var(--accent); font-weight: 600; margin-bottom: 6px; }
 .msg .pill { display: inline-block; margin: 4px 6px 0 0; padding: 4px 10px; border: 1px solid var(--border); border-radius: 999px; font-size: 12px; }
 .btn { margin-top: 16px; padding: 10px 20px; background: var(--accent); color: #08231f; border: 0; border-radius: var(--radius); font-weight: 700; cursor: pointer; }
+
+/* mechanisms cards */
+.panel h3 { color: var(--accent); font-size: 15px; margin: 0 0 8px; }
+.flow { font-size: 13px; margin: 8px 0 0; color: var(--muted); }
+.flow code { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 2px 7px; color: var(--fg); font-size: 12px; }
+.flow .stop { color: #f0a58a; }
+.flow .ok { color: var(--accent); }
+.note { font-size: 12px; color: var(--muted); margin: 10px 0 0; padding-top: 8px; border-top: 1px solid var(--border); }
+
+/* GSAP sets initial hidden states inline; nothing needed here.
+   Perspective gives the panel card flip-in some depth. */
+.grid { perspective: 900px; }
