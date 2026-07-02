@@ -3,110 +3,37 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ChatOps Command Bot · 架构展示</title>
+  <title>ChatOps Command Bot — 确定性做骨架，AI 只做大脑</title>
+  <meta name="description" content="broker/worker 双层架构展示：确定性门卫全包流程，AI 只做分析。" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <nav class="nav">
-    <span class="brand">ChatOps Bot · 架构展示</span>
-    <a href="#philosophy">核心理念</a>
-    <a href="#timeline">核心流程</a>
-    <a href="#mechanisms">核心机制</a>
-    <a href="#demo">模拟对话</a>
+  <div class="bg-grid" aria-hidden="true"></div>
+  <div class="beam" aria-hidden="true"></div>
+
+  <nav class="nav" id="nav">
+    <span class="brand mono">chatops-bot</span>
+    <div class="nav-links">
+      <a href="#principles">理念</a>
+      <a href="#arch">架构</a>
+      <a href="#lifecycle">一条命令的一生</a>
+      <a href="#mechanisms">机制</a>
+    </div>
   </nav>
 
-  <section id="philosophy" class="section">
-    <h2>核心理念</h2>
-    <p class="lead">能用确定性死流程做掉的，门卫（无 LLM）全包；只有真正需要分析的部分才交给 AI worker。</p>
-    <div class="grid cols-3">
-      <div class="panel"><h3>确定性优先</h3><p>解析 / 路由 / 向导 / 生命周期全在确定性门卫里，不会退化。</p></div>
-      <div class="panel"><h3>一线程一实例</h3><p>一个 thread = 一个命令实例，从生到死，线程隔离是铁律。</p></div>
-      <div class="panel"><h3>config 驱动可扩展</h3><p>新增能力 = 加一份 JSON + 一个 worker skill，不碰路由 / 生命周期。</p></div>
-    </div>
-    <div class="panel" style="margin-top:16px">
-      <svg viewBox="0 0 760 200" width="100%" role="img" aria-label="两层架构图">
-        <rect x="20" y="70" width="150" height="60" rx="8" fill="#161b22" stroke="#30363d"/>
-        <text x="95" y="95" fill="#e6edf3" font-size="13" text-anchor="middle">IM 入口</text>
-        <text x="95" y="115" fill="#8b949e" font-size="11" text-anchor="middle">WebSocket</text>
-        <rect x="240" y="50" width="240" height="100" rx="8" fill="#161b22" stroke="#2dd4bf"/>
-        <text x="360" y="80" fill="#2dd4bf" font-size="14" text-anchor="middle">broker · 确定性门卫</text>
-        <text x="360" y="102" fill="#8b949e" font-size="11" text-anchor="middle">解析 / 路由 / 向导 / session</text>
-        <text x="360" y="120" fill="#8b949e" font-size="11" text-anchor="middle">无 LLM · 常驻</text>
-        <rect x="560" y="70" width="180" height="60" rx="8" fill="#161b22" stroke="#58a6ff"/>
-        <text x="650" y="95" fill="#58a6ff" font-size="13" text-anchor="middle">worker · 纯大脑</text>
-        <text x="650" y="115" fill="#8b949e" font-size="11" text-anchor="middle">短命子进程 · 跑完即退</text>
-        <line x1="170" y1="100" x2="240" y2="100" stroke="#30363d" stroke-width="2"/>
-        <line x1="480" y1="100" x2="560" y2="100" stroke="#30363d" stroke-width="2"/>
-        <text x="520" y="92" fill="#8b949e" font-size="10" text-anchor="middle">queue</text>
-      </svg>
-    </div>
-  </section>
+  <header class="act" id="hero"><!-- Task 2 fills --></header>
+  <section class="act" id="principles"><!-- Task 3 fills --></section>
+  <section class="act" id="arch"><!-- Task 4 fills --></section>
+  <section class="act" id="lifecycle"><!-- Task 5 fills --></section>
+  <section class="act" id="mechanisms"><!-- Task 6 fills --></section>
+  <section class="act" id="finale"><!-- Task 6 fills --></section>
 
-  <section id="timeline" class="section">
-    <h2>核心流程时序</h2>
-    <p class="lead">一条命令从入口到回复。点击任意一步高亮查看职责。</p>
-    <ol class="timeline" id="tl">
-      <li data-desc="门卫收到 IM 消息，按 threadKey 定位/创建 session（线程隔离）。">① 入口收消息</li>
-      <li data-desc="FlowRegistry 按 trigger 关键词匹配命令并推断语言。">② 命令路由</li>
-      <li data-desc="StepEngine 读 config 渲染当前 step 卡片（choice / input / multiselect）。">③ config 出卡</li>
-      <li data-desc="用户点按钮 / 填输入 → 收集值 → session 状态机推进 stepIndex。">④ 向导收集</li>
-      <li data-desc="向导跑完，broker 派活给短命 worker 子进程（纯大脑）。">⑤ 派活 worker</li>
-      <li data-desc="worker 返回 result，broker 读 stdout 把结构化报告发回同一 thread。">⑥ 回复 thread</li>
-    </ol>
-    <div class="panel" id="tl-desc">点击上方任意步骤查看说明。</div>
-  </section>
-
-  <section id="mechanisms" class="section">
-    <h2>核心机制</h2>
-    <p class="lead">不看代码，只看概念和流程：门卫靠这五件事把确定性活全包住，AI 只留分析。</p>
-    <div class="grid cols-3">
-      <div class="panel">
-        <h3>01 · 队列去重 / 故障隔离</h3>
-        <p>同一话题、同一时刻只跑一个调查。重复请求当场去重、明确回绝，不排队。分析崩溃只死子进程，门卫照常运转。</p>
-        <p class="flow"><code>重复请求</code> → <span class="stop">⊘ 去重 · 回「正在调查中」</span></p>
-        <p class="flow"><code>AI 崩溃</code> → <span class="ok">只死子进程 · 门卫不受影响</span></p>
-      </div>
-      <div class="panel">
-        <h3>02 · 会话状态 / 生命周期</h3>
-        <p>每个话题一个会话，三态自动流转。正常收尾先问一句反馈，系统故障则直接关闭、不打扰用户。</p>
-        <p class="flow"><span class="ok">进行中</span> → <code>待反馈</code> → <code>已关闭</code></p>
-        <p class="note">闲置 2 小时自动收尾 · 故障关闭不索取反馈 · 可随时唤起重填</p>
-      </div>
-      <div class="panel">
-        <h3>03 · 线程隔离 / Bot 行为</h3>
-        <p>一个话题 = 一个命令实例，状态严格按话题隔离，绝不串台。群里靠卡片按钮收集输入，不靠逐条打字。</p>
-        <p class="flow"><code>群聊</code> → 需 @ 机器人才处理</p>
-        <p class="flow"><code>私聊</code> → 每条直接处理 · <code>卡片按钮</code> → <span class="ok">直接放行</span></p>
-      </div>
-      <div class="panel">
-        <h3>04 · 配置驱动 / 可复用</h3>
-        <p>加一个新能力，只写一份 config + 一个分析 skill，不碰路由和生命周期内核。向导与反馈共用同一套步骤引擎。</p>
-        <p class="flow"><code>新能力</code> → 一份 config + 一个 skill → <span class="ok">接入 · 内核不动</span></p>
-        <p class="note">step engine 统一处理 单选 / 输入 / 多选</p>
-      </div>
-      <div class="panel">
-        <h3>05 · Feedback（综合案例）</h3>
-        <p>反馈把前面几件事串起来：挂在「待反馈」状态上，复用同一套步骤引擎，config 里开个开关即接入。</p>
-        <p class="flow"><code>裁决</code> → <code>三轴评价</code> → <span class="ok">落库归档</span></p>
-        <p class="note">无回应则每日轻提醒，多次无果自动放弃 · 可随时重填覆盖</p>
-      </div>
-    </div>
-  </section>
-
-  <section id="demo" class="section">
-    <h2>模拟对话演示</h2>
-    <p class="lead">仿 IM 聊天。向下滚动即时序播放对话，向上滚动逐条回收——纯前端，不连后端。</p>
-    <div class="scrolly" id="scrolly">
-      <div class="chat-stage">
-        <div class="chat panel" id="chat"></div>
-        <div class="scroll-progress"><span id="chatProgress"></span></div>
-      </div>
-    </div>
-  </section>
-
-  <footer class="footer">脱敏架构展示 · 仅用于技术演示，不含任何真实业务 / 凭证信息</footer>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/ScrollTrigger.min.js"></script>
+  <script src="https://unpkg.com/lenis@1.3.4/dist/lenis.min.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

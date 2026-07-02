@@ -1,62 +1,82 @@
+/* ---------- tokens ---------- */
 :root {
-  --bg: #0d1117; --panel: #161b22; --border: #30363d;
-  --fg: #e6edf3; --muted: #8b949e; --accent: #2dd4bf; --accent2: #58a6ff;
-  --radius: 12px; --max: 980px;
+  --bg: #0a0a0f;
+  --bg-soft: #0e0e15;
+  --panel: rgba(255, 255, 255, 0.03);
+  --border: rgba(255, 255, 255, 0.08);
+  --accent: #2dd4bf;
+  --accent-2: #58a6ff;
+  --text: #ececf1;
+  --muted: #8b8b99;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --sans: -apple-system, "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
 }
-* { box-sizing: border-box; }
+
+/* ---------- base ---------- */
+* { box-sizing: border-box; margin: 0; }
+html { scroll-behavior: auto; } /* Lenis owns smoothing */
 body {
-  margin: 0; background: var(--bg); color: var(--fg);
-  font-family: -apple-system, "Segoe UI", Roboto, "PingFang SC", sans-serif; line-height: 1.6;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  line-height: 1.7;
+  overflow-x: hidden;
 }
+a { color: inherit; text-decoration: none; }
+.mono { font-family: var(--mono); }
+.kicker {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.act { position: relative; padding: 18vh 24px; }
+.act-inner { max-width: 1080px; margin: 0 auto; }
+.glass {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* ---------- background layers ---------- */
+.bg-grid {
+  position: fixed; inset: 0; z-index: -2; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, black 40%, transparent 100%);
+}
+.beam {
+  position: absolute; top: 0; bottom: 0; left: 50%; width: 1px; z-index: -1;
+  background: linear-gradient(180deg, transparent, rgba(45,212,191,0.35) 15%, rgba(45,212,191,0.12) 85%, transparent);
+  pointer-events: none;
+}
+
+/* ---------- nav ---------- */
 .nav {
-  position: sticky; top: 0; display: flex; gap: 20px; align-items: center;
-  padding: 14px 24px; background: rgba(13,17,23,.85); backdrop-filter: blur(8px);
-  border-bottom: 1px solid var(--border); z-index: 10; font-size: 14px;
+  position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 28px;
+  background: rgba(10,10,15,0.6);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border);
 }
-.nav .brand { font-weight: 700; margin-right: auto; color: var(--accent); }
-.nav a { color: var(--muted); text-decoration: none; }
-.nav a:hover { color: var(--fg); }
-.section { max-width: var(--max); margin: 0 auto; padding: 64px 24px; }
-.section h2 { font-size: 28px; margin: 0 0 8px; }
-.section .lead { color: var(--muted); margin: 0 0 28px; }
-.panel { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
-.grid { display: grid; gap: 16px; }
-.grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
-.grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
-.footer { text-align: center; color: var(--muted); padding: 40px 24px; border-top: 1px solid var(--border); font-size: 13px; }
-@media (max-width: 720px) { .grid.cols-2, .grid.cols-3 { grid-template-columns: 1fr; } .nav a { display: none; } }
+.nav .brand { font-size: 14px; color: var(--accent); font-weight: 700; }
+.nav-links { display: flex; gap: 26px; font-size: 14px; color: var(--muted); }
+.nav-links a:hover { color: var(--text); }
 
-.timeline { list-style: none; display: flex; flex-wrap: wrap; gap: 10px; padding: 0; margin: 0 0 16px; }
-.timeline li {
-  flex: 1 1 140px; padding: 14px; background: var(--panel); border: 1px solid var(--border);
-  border-radius: var(--radius); cursor: pointer; font-size: 14px; transition: border-color .15s, transform .15s;
+/* ---------- responsive ---------- */
+@media (max-width: 900px) {
+  .act { padding: 12vh 18px; }
+  .nav-links { gap: 16px; font-size: 13px; }
 }
-.timeline li:hover { transform: translateY(-2px); }
-.timeline li.active { border-color: var(--accent); color: var(--accent); }
 
-/* scroll-driven chat: normal-flow log, each message animated by ScrollTrigger */
-.scrolly { position: relative; }
-.chat { min-height: 200px; display: flex; flex-direction: column; gap: 14px; }
-.scroll-progress { height: 4px; margin-top: 14px; background: var(--panel); border-radius: 999px; overflow: hidden; }
-.scroll-progress span { display: block; height: 100%; width: 0; background: var(--accent); box-shadow: 0 0 12px var(--accent); }
-.msg { max-width: 78%; padding: 10px 14px; border-radius: var(--radius); font-size: 14px; white-space: pre-wrap; }
-/* Reduced-motion / no-GSAP fallback: everything visible */
-body.no-anim #chat .msg { opacity: 1 !important; visibility: visible !important; }
-.msg.user { align-self: flex-end; background: #1f6feb33; border: 1px solid #1f6feb; }
-.msg.bot { align-self: flex-start; background: var(--bg); border: 1px solid var(--border); }
-.msg.card { align-self: flex-start; background: var(--bg); border: 1px solid var(--accent); }
-.msg.card .card-title { color: var(--accent); font-weight: 600; margin-bottom: 6px; }
-.msg .pill { display: inline-block; margin: 4px 6px 0 0; padding: 4px 10px; border: 1px solid var(--border); border-radius: 999px; font-size: 12px; }
-.btn { margin-top: 16px; padding: 10px 20px; background: var(--accent); color: #08231f; border: 0; border-radius: var(--radius); font-weight: 700; cursor: pointer; }
-
-/* mechanisms cards */
-.panel h3 { color: var(--accent); font-size: 15px; margin: 0 0 8px; }
-.flow { font-size: 13px; margin: 8px 0 0; color: var(--muted); }
-.flow code { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 2px 7px; color: var(--fg); font-size: 12px; }
-.flow .stop { color: #f0a58a; }
-.flow .ok { color: var(--accent); }
-.note { font-size: 12px; color: var(--muted); margin: 10px 0 0; padding-top: 8px; border-top: 1px solid var(--border); }
-
-/* GSAP sets initial hidden states inline; nothing needed here.
-   Perspective gives the panel card flip-in some depth. */
-.grid { perspective: 900px; }
+/* ---------- reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
