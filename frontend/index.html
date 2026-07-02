@@ -37,7 +37,23 @@
       <div class="scroll-hint mono" aria-hidden="true">SCROLL ↓</div>
     </div>
   </header>
-  <section class="act" id="principles"><!-- Task 3 fills --></section>
+  <section class="act" id="principles">
+    <div class="act-inner">
+      <p class="kicker">01 — PRINCIPLES · 核心理念</p>
+      <div class="principle">
+        <span class="p-num mono" aria-hidden="true">01</span>
+        <div><h3>确定性优先</h3><p>能用死流程做掉的绝不交给模型：解析、路由、向导、生命周期，全部跑在无 LLM 的门卫里，永远不会退化。</p></div>
+      </div>
+      <div class="principle">
+        <span class="p-num mono" aria-hidden="true">02</span>
+        <div><h3>一线程一实例</h3><p>一个 thread 就是一个命令实例，从生到死。状态严格按线程隔离，绝不串台，这是铁律。</p></div>
+      </div>
+      <div class="principle">
+        <span class="p-num mono" aria-hidden="true">03</span>
+        <div><h3>config 驱动扩展</h3><p>新增一个能力 = 一份 JSON + 一个 worker skill。路由和生命周期内核一行不动。</p></div>
+      </div>
+    </div>
+  </section>
   <section class="act" id="arch"><!-- Task 4 fills --></section>
   <section class="act" id="lifecycle"><!-- Task 5 fills --></section>
   <section class="act" id="mechanisms"><!-- Task 6 fills --></section>

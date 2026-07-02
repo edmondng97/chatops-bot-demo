@@ -57,8 +57,28 @@ function safeInit(fn) {
   }
 }
 
+function initKickers() {
+  if (!MOTION) return;
+  gsap.utils.toArray('.act .kicker').forEach((k) => {
+    gsap.from(k, { scrollTrigger: { trigger: k, start: 'top 88%' }, autoAlpha: 0, letterSpacing: '0.6em', duration: 0.8 });
+  });
+}
+
+function initPrinciples() {
+  if (!MOTION) return;
+  gsap.utils.toArray('.principle').forEach((row) => {
+    gsap.timeline({
+      scrollTrigger: { trigger: row, start: 'top 80%', toggleActions: 'play none none reverse' },
+    })
+      .from(row.querySelector('.p-num'), { x: -60, autoAlpha: 0, duration: 0.7 })
+      .from(row.querySelectorAll('h3, p'), { y: 30, autoAlpha: 0, stagger: 0.1, duration: 0.6 }, '-=0.4');
+  });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   safeInit(initLenis);
   safeInit(initHero);
+  safeInit(initKickers);
+  safeInit(initPrinciples);
   if (MOTION) ScrollTrigger.refresh();
 });
