@@ -153,6 +153,25 @@ function initLifecycle() {
   tl.to({}, { duration: 0.5 }); // hold beat before unpin
 }
 
+function initMechanisms() {
+  if (!MOTION) return;
+  ScrollTrigger.batch('.bento-card', {
+    start: 'top 88%',
+    onEnter: (els) => gsap.from(els, {
+      y: 46, autoAlpha: 0, scale: 0.95, duration: 0.8, stagger: 0.08,
+      ease: 'back.out(1.4)', overwrite: true,
+    }),
+  });
+}
+
+function initFinale() {
+  if (!MOTION) return;
+  gsap.from('#finale .finale-line, #finale .hero-sub, #finale .footer', {
+    scrollTrigger: { trigger: '#finale', start: 'top 70%' },
+    y: 40, autoAlpha: 0, stagger: 0.15, duration: 0.9,
+  });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   safeInit(initLenis);
   safeInit(initHero);
@@ -160,5 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
   safeInit(initPrinciples);
   safeInit(initArch);
   safeInit(initLifecycle);
+  safeInit(initMechanisms);
+  safeInit(initFinale);
   if (MOTION) ScrollTrigger.refresh();
 });
