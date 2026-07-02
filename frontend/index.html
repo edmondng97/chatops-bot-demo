@@ -55,36 +55,34 @@
     </div>
   </section>
   <section class="act" id="arch">
-    <div class="act-inner arch-wrap">
-      <div class="arch-sticky">
-        <p class="kicker">02 — ARCHITECTURE · 架构总览</p>
-        <h2>常驻的门卫，短命的大脑。</h2>
-        <svg viewBox="0 0 760 240" width="100%" role="img" aria-label="broker/worker 两层架构图">
-          <g id="n-im" class="arch-node">
-            <rect x="20" y="90" width="150" height="64" rx="10" fill="var(--bg-soft)" stroke="rgba(255,255,255,0.2)"/>
-            <text x="95" y="118" fill="#ececf1" font-size="13" text-anchor="middle">IM 入口</text>
-            <text x="95" y="138" fill="#8b8b99" font-size="11" text-anchor="middle">WebSocket</text>
-          </g>
-          <path id="e1" d="M 170 122 H 250" pathLength="1" stroke="#2dd4bf" stroke-width="2" fill="none"/>
-          <g id="n-broker" class="arch-node">
-            <rect x="250" y="70" width="240" height="104" rx="10" fill="var(--bg-soft)" stroke="#2dd4bf"/>
-            <text x="370" y="102" fill="#2dd4bf" font-size="14" text-anchor="middle" font-weight="700">broker · 确定性门卫</text>
-            <text x="370" y="126" fill="#8b8b99" font-size="11" text-anchor="middle">解析 / 路由 / 向导 / session</text>
-            <text x="370" y="146" fill="#8b8b99" font-size="11" text-anchor="middle">无 LLM · 常驻进程</text>
-          </g>
-          <path id="e2" d="M 490 122 H 570" pathLength="1" stroke="#58a6ff" stroke-width="2" fill="none"/>
-          <text x="530" y="112" fill="#8b8b99" font-size="10" text-anchor="middle" font-family="var(--mono)">queue</text>
-          <g id="n-worker" class="arch-node">
-            <rect x="570" y="90" width="170" height="64" rx="10" fill="var(--bg-soft)" stroke="#58a6ff"/>
-            <text x="655" y="118" fill="#58a6ff" font-size="13" text-anchor="middle">worker · 纯大脑</text>
-            <text x="655" y="138" fill="#8b8b99" font-size="11" text-anchor="middle">短命子进程 · 跑完即退</text>
-          </g>
-        </svg>
-        <div class="arch-notes">
-          <p class="arch-note" data-step="0"><strong>IM 入口</strong> — 消息经 WebSocket 进来，按 threadKey 落到唯一 session。</p>
-          <p class="arch-note" data-step="1"><strong>broker</strong> — 确定性门卫：解析、路由、向导、生命周期全包，一行 LLM 都没有。</p>
-          <p class="arch-note" data-step="2"><strong>worker</strong> — 只有真正需要分析时才被拉起的子进程，跑完即退，崩了也不影响门卫。</p>
-        </div>
+    <div class="act-inner">
+      <p class="kicker">02 — ARCHITECTURE · 架构总览</p>
+      <h2>常驻的门卫，短命的大脑。</h2>
+      <svg viewBox="0 0 760 240" width="100%" role="img" aria-label="broker/worker 两层架构图">
+        <g id="n-im" class="arch-node">
+          <rect x="20" y="90" width="150" height="64" rx="10" fill="var(--bg-soft)" stroke="rgba(255,255,255,0.2)"/>
+          <text x="95" y="118" fill="#ececf1" font-size="13" text-anchor="middle">IM 入口</text>
+          <text x="95" y="138" fill="#8b8b99" font-size="11" text-anchor="middle">WebSocket</text>
+        </g>
+        <path id="e1" d="M 170 122 H 250" pathLength="1" stroke="#2dd4bf" stroke-width="2" fill="none"/>
+        <g id="n-broker" class="arch-node">
+          <rect x="250" y="70" width="240" height="104" rx="10" fill="var(--bg-soft)" stroke="#2dd4bf"/>
+          <text x="370" y="102" fill="#2dd4bf" font-size="14" text-anchor="middle" font-weight="700">broker · 确定性门卫</text>
+          <text x="370" y="126" fill="#8b8b99" font-size="11" text-anchor="middle">解析 / 路由 / 向导 / session</text>
+          <text x="370" y="146" fill="#8b8b99" font-size="11" text-anchor="middle">无 LLM · 常驻进程</text>
+        </g>
+        <path id="e2" d="M 490 122 H 570" pathLength="1" stroke="#58a6ff" stroke-width="2" fill="none"/>
+        <text x="530" y="112" fill="#8b8b99" font-size="10" text-anchor="middle" font-family="var(--mono)">queue</text>
+        <g id="n-worker" class="arch-node">
+          <rect x="570" y="90" width="170" height="64" rx="10" fill="var(--bg-soft)" stroke="#58a6ff"/>
+          <text x="655" y="118" fill="#58a6ff" font-size="13" text-anchor="middle">worker · 纯大脑</text>
+          <text x="655" y="138" fill="#8b8b99" font-size="11" text-anchor="middle">短命子进程 · 跑完即退</text>
+        </g>
+      </svg>
+      <div class="arch-notes">
+        <p class="arch-note" data-step="0"><strong>IM 入口</strong> — 消息经 WebSocket 进来，按 threadKey 落到唯一 session。</p>
+        <p class="arch-note" data-step="1"><strong>broker</strong> — 确定性门卫：解析、路由、向导、生命周期全包，一行 LLM 都没有。</p>
+        <p class="arch-note" data-step="2"><strong>worker</strong> — 只有真正需要分析时才被拉起的子进程，跑完即退，崩了也不影响门卫。</p>
       </div>
     </div>
   </section>

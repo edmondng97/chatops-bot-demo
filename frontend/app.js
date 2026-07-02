@@ -89,6 +89,7 @@ function initPrinciples() {
 
 function initArch() {
   const notes = gsap.utils.toArray('#arch .arch-note');
+  const archNodes = gsap.utils.toArray('#arch .arch-node');
   if (!MOTION || window.innerWidth < 900) { notes.forEach((n) => n.classList.add('active')); return; }
 
   gsap.set('#e1, #e2', { strokeDasharray: 1, strokeDashoffset: 1 });
@@ -101,7 +102,7 @@ function initArch() {
         // Threshold-based highlighting works in both scroll directions.
         const step = self.progress < 0.33 ? 0 : self.progress < 0.72 ? 1 : 2;
         notes.forEach((n, i) => n.classList.toggle('active', i === step));
-        document.querySelectorAll('#arch .arch-node').forEach((g, i) => g.classList.toggle('lit', i <= step));
+        archNodes.forEach((g, i) => g.classList.toggle('lit', i <= step));
       },
     },
   });
