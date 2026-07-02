@@ -88,7 +88,23 @@
       </div>
     </div>
   </section>
-  <section class="act" id="lifecycle"><!-- Task 5 fills --></section>
+  <section class="act" id="lifecycle">
+    <div class="act-inner">
+      <p class="kicker">03 — LIFECYCLE · 一条命令的一生</p>
+      <h2>从一句 @bot，到一份结构化报告。</h2>
+      <div class="ls-wrap">
+        <div class="ls-chat glass" id="lsChat" aria-label="模拟 IM 对话（纯前端演示）"></div>
+        <ol class="ls-steps" id="lsSteps">
+          <li class="ls-step" data-step="0"><span class="mono">STEP 1</span>入口收消息 — 按 threadKey 定位或创建 session，线程隔离。</li>
+          <li class="ls-step" data-step="1"><span class="mono">STEP 2</span>命令路由 — FlowRegistry 按 trigger 关键词匹配命令。</li>
+          <li class="ls-step" data-step="2"><span class="mono">STEP 3</span>config 出卡 — StepEngine 读配置渲染当前步骤卡片。</li>
+          <li class="ls-step" data-step="3"><span class="mono">STEP 4</span>向导收集 — 按钮/输入收集值，session 状态机推进。</li>
+          <li class="ls-step" data-step="4"><span class="mono">STEP 5</span>派活 worker — broker 拉起短命子进程做分析。</li>
+          <li class="ls-step" data-step="5"><span class="mono">STEP 6</span>回复 thread — 结构化报告发回同一线程。</li>
+        </ol>
+      </div>
+    </div>
+  </section>
   <section class="act" id="mechanisms"><!-- Task 6 fills --></section>
   <section class="act" id="finale"><!-- Task 6 fills --></section>
 

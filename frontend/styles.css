@@ -109,6 +109,22 @@ a { color: inherit; text-decoration: none; }
 .arch-note { color: var(--muted); font-size: 15px; opacity: 0.25; transition: opacity 0.3s; }
 .arch-note.active { opacity: 1; color: var(--text); }
 
+/* ---------- lifecycle (pinned climax) ---------- */
+#lifecycle h2 { font-size: clamp(28px, 4vw, 44px); margin: 14px 0 34px; letter-spacing: -0.01em; }
+.ls-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+.ls-chat { padding: 22px; display: flex; flex-direction: column; gap: 12px; min-height: 420px; }
+.msg { max-width: 85%; padding: 10px 14px; border-radius: 12px; font-size: 14px; white-space: pre-line; }
+.msg.user { align-self: flex-end; background: rgba(45,212,191,0.12); border: 1px solid rgba(45,212,191,0.3); }
+.msg.bot { align-self: flex-start; background: var(--panel); border: 1px solid var(--border); color: var(--muted); }
+.msg.card { align-self: flex-start; background: var(--bg-soft); border: 1px solid var(--border); width: 85%; }
+.card-title { font-weight: 700; margin-bottom: 6px; }
+.pill { display: inline-block; border: 1px solid var(--accent); color: var(--accent); border-radius: 999px; padding: 2px 12px; margin: 6px 6px 0 0; font-size: 12px; font-family: var(--mono); }
+.ls-steps { list-style: none; padding: 0; display: grid; gap: 14px; }
+.ls-step { padding: 14px 18px; border-left: 2px solid var(--border); color: var(--muted); opacity: 0.35; transition: opacity 0.3s, border-color 0.3s; }
+.ls-step .mono { display: block; font-size: 11px; color: var(--accent); letter-spacing: 0.2em; margin-bottom: 4px; }
+.ls-step.active { opacity: 1; color: var(--text); border-left-color: var(--accent); }
+@media (max-width: 900px) { .ls-wrap { grid-template-columns: 1fr; } }
+
 /* ---------- responsive ---------- */
 @media (max-width: 900px) {
   .act { padding: 12vh 18px; }
