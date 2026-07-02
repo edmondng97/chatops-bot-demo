@@ -75,10 +75,38 @@ function initPrinciples() {
   });
 }
 
+function initArch() {
+  const notes = gsap.utils.toArray('#arch .arch-note');
+  if (!MOTION || window.innerWidth < 900) { notes.forEach((n) => n.classList.add('active')); return; }
+
+  gsap.set('#e1, #e2', { strokeDasharray: 1, strokeDashoffset: 1 });
+
+  const tl = gsap.timeline({
+    scrollTrigger: {
+      trigger: '#arch', start: 'top top', end: '+=1600',
+      pin: true, scrub: 0.6,
+      onUpdate(self) {
+        // Threshold-based highlighting works in both scroll directions.
+        const step = self.progress < 0.33 ? 0 : self.progress < 0.72 ? 1 : 2;
+        notes.forEach((n, i) => n.classList.toggle('active', i === step));
+        document.querySelectorAll('#arch .arch-node').forEach((g, i) => g.classList.toggle('lit', i <= step));
+      },
+    },
+  });
+
+  tl.from('#n-im', { autoAlpha: 0, y: 30, duration: 0.6 })
+    .to('#e1', { strokeDashoffset: 0, duration: 0.8 })
+    .from('#n-broker', { autoAlpha: 0, scale: 0.9, transformOrigin: '50% 50%', duration: 0.8 })
+    .to('#e2', { strokeDashoffset: 0, duration: 0.8 })
+    .from('#n-worker', { autoAlpha: 0, y: 30, duration: 0.6 })
+    .to({}, { duration: 0.5 }); // hold beat before unpin
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   safeInit(initLenis);
   safeInit(initHero);
   safeInit(initKickers);
   safeInit(initPrinciples);
+  safeInit(initArch);
   if (MOTION) ScrollTrigger.refresh();
 });
