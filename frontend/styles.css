@@ -69,6 +69,13 @@ a { color: inherit; text-decoration: none; }
 .nav .brand { font-size: 14px; color: var(--accent); font-weight: 700; }
 .nav-links { display: flex; gap: 26px; font-size: 14px; color: var(--muted); }
 .nav-links a:hover { color: var(--text); }
+.lang-toggle {
+  font-size: 12px; color: var(--accent);
+  background: transparent; border: 1px solid var(--border); border-radius: 999px;
+  padding: 5px 13px; cursor: pointer; transition: border-color 0.2s, color 0.2s;
+}
+.lang-toggle:hover { border-color: var(--accent); color: var(--text); }
+@media (max-width: 900px) { .lang-toggle { padding: 4px 10px; font-size: 11px; } }
 
 /* ---------- hero ---------- */
 #hero { min-height: 100vh; display: flex; align-items: center; }
