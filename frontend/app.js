@@ -49,8 +49,16 @@ function initHero() {
   });
 }
 
+// Safety net: if any init throws, strip GSAP inline styles so content stays visible.
+function safeInit(fn) {
+  try { fn(); } catch (err) {
+    console.error('init failed, revealing content:', err);
+    if (window.gsap) gsap.set('.nav, .act, .act *', { clearProps: 'opacity,visibility,transform' });
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
-  initLenis();
-  initHero();
+  safeInit(initLenis);
+  safeInit(initHero);
   if (MOTION) ScrollTrigger.refresh();
 });
