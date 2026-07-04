@@ -80,7 +80,7 @@ a { color: inherit; text-decoration: none; }
 /* ---------- hero ---------- */
 #hero { min-height: 100vh; display: flex; align-items: center; }
 .hero-title {
-  font-size: clamp(44px, 8vw, 96px);
+  font-size: clamp(38px, 5vw, 76px);
   font-weight: 800; line-height: 1.15; letter-spacing: -0.02em;
   margin: 24px 0;
 }
@@ -90,11 +90,64 @@ a { color: inherit; text-decoration: none; }
   -webkit-background-clip: text; background-clip: text; color: transparent;
 }
 .hero-sub { max-width: 560px; color: var(--muted); font-size: 17px; }
+.hero-inner { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 56px; align-items: center; width: 100%; }
+.hero-glow {
+  position: absolute; right: -8%; top: 12%; width: 720px; height: 720px;
+  background: radial-gradient(circle, rgba(45,212,191,0.13), transparent 62%);
+  filter: blur(24px); pointer-events: none; z-index: -1;
+}
+/* The chat window IS the product — tilted glass panel, flattens on hover. */
+.hero-window {
+  padding: 0; overflow: hidden;
+  border-color: rgba(45,212,191,0.22);
+  box-shadow: 0 30px 80px rgba(0,0,0,0.55), 0 0 48px rgba(45,212,191,0.07);
+  transform: perspective(1200px) rotateY(-9deg) rotateX(2.5deg);
+  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.hero-window:hover { transform: perspective(1200px) rotateY(0deg) rotateX(0deg); }
+.hw-bar {
+  display: flex; align-items: center; gap: 7px;
+  padding: 12px 16px; border-bottom: 1px solid var(--border);
+  background: rgba(255,255,255,0.02);
+}
+.hw-dot { width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.14); }
+.hw-title { margin-left: 8px; font-size: 12px; color: var(--muted); letter-spacing: 0.06em; }
+.hw-body { padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+.hw-body .msg { font-size: 13.5px; }
+.hw-typing { display: inline-flex; gap: 5px; align-items: center; padding: 13px 15px; }
+.hw-typing span {
+  width: 6px; height: 6px; border-radius: 50%; background: var(--muted);
+  animation: hw-blink 1.2s infinite;
+}
+.hw-typing span:nth-child(2) { animation-delay: 0.2s; }
+.hw-typing span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes hw-blink { 0%, 80%, 100% { opacity: 0.25; } 40% { opacity: 1; } }
+@media (max-width: 1000px) {
+  .hero-inner { grid-template-columns: 1fr; gap: 40px; }
+  .hero-window { transform: none; }
+  .hero-glow { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .hw-typing { display: none; } }
 .hero-meta { display: flex; gap: 22px; margin-top: 36px; font-size: 12px; color: var(--accent); flex-wrap: wrap; }
 .hero-meta span { border: 1px solid var(--border); border-radius: 999px; padding: 6px 14px; }
 .scroll-hint { position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%); font-size: 11px; letter-spacing: 0.3em; color: var(--muted); }
 
+/* ---------- what (product intro) ---------- */
+#what h2 { font-size: clamp(28px, 4vw, 44px); margin: 14px 0 34px; letter-spacing: -0.01em; }
+.what-story { max-width: 720px; display: grid; gap: 22px; }
+.what-line { color: var(--muted); font-size: 17px; line-height: 1.85; }
+.what-line strong { color: var(--text); font-weight: 600; }
+.what-note { font-size: 12px; color: var(--accent); letter-spacing: 0.08em; opacity: 0.85; }
+
 /* ---------- principles ---------- */
+.thesis {
+  font-size: clamp(34px, 5.5vw, 68px);
+  font-weight: 800; line-height: 1.25; letter-spacing: -0.02em;
+  margin: 18px 0 14px;
+  background: linear-gradient(180deg, #fff 60%, rgba(255,255,255,0.55));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.thesis-lead { color: var(--muted); max-width: 640px; margin-bottom: 28px; }
 .principle {
   display: grid; grid-template-columns: 180px 1fr; gap: 28px;
   align-items: center; padding: 56px 0;

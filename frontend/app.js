@@ -31,8 +31,8 @@ const CHAT_SCRIPT = [
     zh: '用户 12345 在 13:20 请求失败',
     en: 'User 12345 request failed at 13:20' },
   { cls: 'bot', step: 4,
-    zh: '⏳ 向导完成，worker 子进程分析中…',
-    en: '⏳ Wizard complete, worker subprocess analyzing…' },
+    zh: '⏳ 向导完成，AI agent 分析中…',
+    en: '⏳ Wizard complete, AI agent analyzing…' },
   { cls: 'card', step: 5,
     zh: '<div class="card-title">📋 诊断报告（模拟）</div>环境=UAT · 分支=main\n根因：上游服务返回空额度。\n置信度 82%。',
     en: '<div class="card-title">📋 Diagnostic report (simulated)</div>env=UAT · branch=main\nRoot cause: upstream service returned an empty quota.\nConfidence 82%.' },
@@ -40,11 +40,30 @@ const CHAT_SCRIPT = [
 
 // Static text swapped between zh/en. Selector -> {zh, en} innerHTML.
 const TRANSLATIONS = [
-  { sel: '#heroTitle', zh: '确定性做骨架，<br />AI 只做大脑。', en: 'Deterministic skeleton.<br />AI is just the brain.' },
-  { sel: '#heroSub', zh: '一个 IM 命令机器人的双层架构：常驻的确定性门卫包办解析、路由、向导与生命周期；短命的 AI worker 只负责真正需要分析的部分。',
-    en: 'A two-layer IM command bot: a resident, deterministic gatekeeper handles parsing, routing, wizards and lifecycle; a short-lived AI worker only steps in when real analysis is needed.' },
+  { sel: '#heroTitle', zh: '把 AI 请进<br />你的聊天窗。', en: 'Bring AI into<br />your chat window.' },
+  { sel: '#heroMsg1', zh: '@bot 这个接口又 500 了，帮我查一下', en: '@bot that endpoint is 500-ing again — take a look', text: true },
+  { sel: '#heroMsg2', zh: '收到，开始调查…', en: 'On it. Investigating…', text: true },
+  { sel: '#heroCard', zh: '<div class="card-title">📋 诊断报告</div>根因：上游额度服务超时 · 置信度 82%',
+    en: '<div class="card-title">📋 Diagnostic report</div>Root cause: upstream quota service timeout · confidence 82%' },
+  { sel: '#heroSub', zh: '@ 一下，AI agent 接手：拉日志、查代码、给出结构化报告——结果发回同一个 thread，全员都看着。',
+    en: '@mention it, and an AI agent takes over: pulls logs, reads code, delivers a structured report — back in the same thread, in front of the whole team.' },
 
-  { sel: '#principles .kicker', zh: '01 — PRINCIPLES · 核心理念', en: '01 — PRINCIPLES · Core Principles' },
+  { sel: '#what .kicker', zh: '01 — WHAT · 这是什么', en: '01 — WHAT · What Is This' },
+  { sel: '#whatH2', zh: '团队的事，大多是在聊天窗里开始的。', en: "Most of a team's work starts in a chat window." },
+  { sel: '#what-line-1', zh: '「这个接口又 500 了」「帮我查下这条订单」——问题先在对话里冒头，然后才有人切出去开日志、翻代码、拉着人对时间线。',
+    en: '"That endpoint is 500-ing again." "Can someone check this order?" — problems surface in conversation first; only then does someone switch away to dig through logs, read code, and chase people for a timeline.' },
+  { sel: '#what-line-2', zh: 'ChatOps bot 做的事很直接：<strong>@ 一下，把一个 AI agent 请进这场对话</strong>。它接手、去查、把结果发回同一个 thread——不用切工具，全员都看着。',
+    en: 'A ChatOps bot keeps it simple: <strong>@mention it, and an AI agent joins the conversation</strong>. It takes over, investigates, and posts the result back to the same thread — no tool-switching, in front of the whole team.' },
+  { sel: '#what-line-3', zh: '但你我都知道，随口一句话喂给 AI，回来的东西时好时坏、没法复现、也没人兜底。所以这个机器人不只是「把 AI 接进来」——它把那句随口的话，<strong>收拢成一条有向导、有始有终、可复用、可追溯的命令</strong>。',
+    en: 'But we both know what a throwaway sentence fed straight to AI gets you: hit-or-miss answers, nothing reproducible, nobody accountable. So this bot does more than "plug AI in" — it gathers that casual sentence into <strong>a guided command with a beginning, an end, a repeatable shape and an audit trail</strong>.' },
+  { sel: '#what-line-4', zh: '至于 chat 是 Slack、Teams 还是 Lark，agent 是 Claude Code 还是 Cursor——都只是插头。',
+    en: 'And whether the chat is Slack, Teams or Lark, whether the agent is Claude Code or Cursor — those are just plugs.' },
+  { sel: '#whatNote', zh: '本 demo 以 Lark + Claude Code 为例。', en: 'This demo uses Lark + Claude Code as the example.', text: true },
+
+  { sel: '#principles .kicker', zh: '02 — PRINCIPLES · 核心理念', en: '02 — PRINCIPLES · Core Principles' },
+  { sel: '#thesisH2', zh: '确定性做骨架，<br />AI 只做大脑。', en: 'Deterministic skeleton.<br />AI is just the brain.' },
+  { sel: '#thesisLead', zh: '要让一句随口的话变成可靠的命令，秘诀是：能交给死流程的，绝不交给模型。三条铁律——',
+    en: 'Turning a casual sentence into a reliable command comes down to one rule: whatever a fixed flow can handle never goes to the model. Three laws —' },
   { sel: '#principle-1 h3', zh: '确定性优先', en: 'Determinism first' },
   { sel: '#principle-1 p', zh: '能用死流程做掉的绝不交给模型：解析、路由、向导、生命周期，全部跑在无 LLM 的门卫里，永远不会退化。',
     en: "Anything a fixed flow can handle never touches the model: parsing, routing, wizards, lifecycle — all run in the no-LLM gatekeeper, so they never degrade." },
@@ -55,9 +74,9 @@ const TRANSLATIONS = [
   { sel: '#principle-3 p', zh: '新增一个能力 = 一份 JSON + 一个 worker skill。路由和生命周期内核一行不动。',
     en: 'A new capability = one JSON config + one worker skill. Routing and lifecycle internals stay untouched.' },
 
-  { sel: '#arch .kicker', zh: '02 — ARCHITECTURE · 架构总览', en: '02 — ARCHITECTURE · Overview' },
+  { sel: '#arch .kicker', zh: '03 — ARCHITECTURE · 架构总览', en: '03 — ARCHITECTURE · Overview' },
   { sel: '#arch h2', zh: '常驻的门卫，短命的大脑。', en: 'A resident gatekeeper, a short-lived brain.' },
-  { sel: '#t-im-1', zh: 'IM 入口', en: 'IM Gateway', text: true },
+  { sel: '#t-im-1', zh: 'Chat 入口', en: 'Chat Gateway', text: true },
   { sel: '#t-im-2', zh: 'WebSocket', en: 'WebSocket', text: true },
   { sel: '#t-broker-1', zh: 'broker · 确定性门卫', en: 'broker · deterministic gatekeeper', text: true },
   { sel: '#t-broker-2', zh: '解析 / 路由 / 向导 / session', en: 'parse / route / wizard / session', text: true },
@@ -65,14 +84,14 @@ const TRANSLATIONS = [
   { sel: '#t-queue', zh: 'queue', en: 'queue', text: true },
   { sel: '#t-worker-1', zh: 'worker · 纯大脑', en: 'worker · pure brain', text: true },
   { sel: '#t-worker-2', zh: '短命子进程 · 跑完即退', en: 'short-lived subprocess · exits when done', text: true },
-  { sel: '.arch-note[data-step="0"]', zh: '<strong>IM 入口</strong> — 消息经 WebSocket 进来，按 threadKey 落到唯一 session。',
-    en: '<strong>IM Gateway</strong> — messages arrive over WebSocket and land on a unique session by threadKey.' },
+  { sel: '.arch-note[data-step="0"]', zh: '<strong>Chat 入口</strong> — 消息经 WebSocket 进来，按 threadKey 落到唯一 session。',
+    en: '<strong>Chat Gateway</strong> — messages arrive over WebSocket and land on a unique session by threadKey.' },
   { sel: '.arch-note[data-step="1"]', zh: '<strong>broker</strong> — 确定性门卫：解析、路由、向导、生命周期全包，一行 LLM 都没有。',
     en: '<strong>broker</strong> — the deterministic gatekeeper: parsing, routing, wizards, lifecycle — all covered, zero lines of LLM.' },
   { sel: '.arch-note[data-step="2"]', zh: '<strong>worker</strong> — 只有真正需要分析时才被拉起的子进程，跑完即退，崩了也不影响门卫。',
     en: '<strong>worker</strong> — a subprocess spun up only when real analysis is needed; it exits when done, and crashing never touches the gatekeeper.' },
 
-  { sel: '#lifecycle .kicker', zh: '03 — LIFECYCLE · 一条命令的一生', en: '03 — LIFECYCLE · Life of a Command' },
+  { sel: '#lifecycle .kicker', zh: '04 — LIFECYCLE · 一条命令的一生', en: '04 — LIFECYCLE · Life of a Command' },
   { sel: '#lifecycle h2', zh: '从一句 @bot，到一份结构化报告。', en: 'From an @bot mention to a structured report.' },
   { sel: '.ls-step[data-step="0"] .ls-step-text', zh: '入口收消息 — 按 threadKey 定位或创建 session，线程隔离。',
     en: 'Message received — locate or create a session by threadKey, thread-isolated.' },
@@ -87,7 +106,7 @@ const TRANSLATIONS = [
   { sel: '.ls-step[data-step="5"] .ls-step-text', zh: '回复 thread — 结构化报告发回同一线程。',
     en: 'Reply posted — a structured report is sent back to the same thread.' },
 
-  { sel: '#mechKicker', zh: '04 — MECHANISMS · 核心机制', en: '04 — MECHANISMS · Core Mechanisms' },
+  { sel: '#mechKicker', zh: '05 — MECHANISMS · 核心机制', en: '05 — MECHANISMS · Core Mechanisms' },
   { sel: '#mechH2', zh: '门卫靠这五件事，把确定性活全包住。', en: 'Five mechanisms let the gatekeeper own every deterministic task.' },
   { sel: '#mech-1 .mech-title', zh: '队列去重 / 故障隔离', en: 'Dedup / Fault Isolation' },
   { sel: '#mech-1-desc', zh: '同一话题、同一时刻只跑一个调查。重复请求当场去重、明确回绝，不排队。分析崩溃只死子进程，门卫照常运转。',
@@ -120,6 +139,7 @@ const TRANSLATIONS = [
   { sel: '#mech-5-note', zh: '无回应则每日轻提醒，多次无果自动放弃 · 可随时重填覆盖',
     en: 'A gentle daily nudge if unanswered, auto-abandoned after repeated silence · can be refilled anytime' },
 
+  { sel: '#finaleKicker', zh: '06 — EXTEND · 收尾', en: '06 — EXTEND · Wrap-up' },
   { sel: '#finaleLine', zh: '新增一个能力<br /><span class="eq mono">=</span> 一份 config <span class="plus mono">+</span> 一个 skill。',
     en: 'A new capability<br /><span class="eq mono">=</span> one config <span class="plus mono">+</span> one skill.' },
   { sel: '#finaleSub', zh: '内核不动，边界清晰。这就是确定性骨架的意义。', en: 'The internals never move, the boundaries stay clean. That is the point of a deterministic skeleton.' },
@@ -128,6 +148,7 @@ const TRANSLATIONS = [
 ];
 
 const NAV_LINKS = [
+  { href: '#what', zh: '这是什么', en: 'What' },
   { href: '#principles', zh: '理念', en: 'Principles' },
   { href: '#arch', zh: '架构', en: 'Architecture' },
   { href: '#lifecycle', zh: '一条命令的一生', en: 'Lifecycle' },
@@ -135,8 +156,8 @@ const NAV_LINKS = [
 ];
 
 const PAGE_META = {
-  zh: { title: 'ChatOps Command Bot — 确定性做骨架，AI 只做大脑', desc: 'broker/worker 双层架构展示：确定性门卫全包流程，AI 只做分析。', chatLabel: '模拟 IM 对话（纯前端演示）' },
-  en: { title: 'ChatOps Command Bot — Deterministic Skeleton, AI Is Just the Brain', desc: 'broker/worker two-layer architecture: a deterministic gatekeeper owns the flow, AI only analyzes.', chatLabel: 'Simulated IM conversation (frontend-only demo)' },
+  zh: { title: 'ChatOps Command Bot — 把 AI 请进你的聊天窗', desc: 'ChatOps 命令机器人产品展示：@ 一下让 AI agent 接手调查，确定性门卫兜底流程。', chatLabel: '模拟 chat 对话（纯前端演示）' },
+  en: { title: 'ChatOps Command Bot — Bring AI Into Your Chat Window', desc: 'ChatOps command bot showcase: @mention to hand investigations to an AI agent, with a deterministic gatekeeper owning the flow.', chatLabel: 'Simulated chat conversation (frontend-only demo)' },
 };
 
 let LANG = localStorage.getItem('lang') === 'en' ? 'en' : 'zh';
@@ -146,17 +167,23 @@ function splitHeroWords(el) {
   const frag = document.createDocumentFragment();
   el.childNodes.forEach((node) => {
     if (node.nodeName === 'BR') { frag.appendChild(document.createElement('br')); return; }
-    for (const ch of node.textContent) {
-      // A lone space as the entire content of an inline-block box counts as
-      // both leading and trailing whitespace, so browsers collapse it to
-      // zero width — English words would run together. Keep spaces as
-      // plain text nodes; only animate non-space characters.
-      if (ch === ' ') { frag.appendChild(document.createTextNode(' ')); continue; }
-      const s = document.createElement('span');
-      s.className = 'hero-word';
-      s.style.display = 'inline-block';
-      s.textContent = ch;
-      frag.appendChild(s);
+    // Group per-char spans inside a nowrap word wrapper: inline-block char
+    // spans would otherwise allow line breaks mid-word ("wind / ow").
+    // Spaces stay as plain text nodes so lines can only break between words.
+    for (const word of node.textContent.split(/(\s+)/)) {
+      if (!word) continue;
+      if (/^\s+$/.test(word)) { frag.appendChild(document.createTextNode(' ')); continue; }
+      const w = document.createElement('span');
+      w.style.display = 'inline-block';
+      w.style.whiteSpace = 'nowrap';
+      for (const ch of word) {
+        const s = document.createElement('span');
+        s.className = 'hero-word';
+        s.style.display = 'inline-block';
+        s.textContent = ch;
+        w.appendChild(s);
+      }
+      frag.appendChild(w);
     }
   });
   el.replaceChildren(frag);
@@ -225,7 +252,24 @@ function initHero() {
     .from('#hero .kicker', { y: 20, autoAlpha: 0, duration: 0.5 }, '-=0.2')
     .from('.hero-word', { y: 60, autoAlpha: 0, rotationX: -40, stagger: 0.035, duration: 0.7, ease: 'back.out(1.6)' }, '-=0.2')
     .from('.hero-sub, .hero-meta span', { y: 24, autoAlpha: 0, stagger: 0.06, duration: 0.6 }, '-=0.3')
-    .from('.scroll-hint', { autoAlpha: 0, duration: 0.8 });
+    // The product demos itself: window slides in, then the chat sequence loops forever.
+    .from('.hero-window-wrap', { x: 70, autoAlpha: 0, duration: 0.8 }, '-=0.5')
+    .from('.scroll-hint', { autoAlpha: 0, duration: 0.8 }, '-=0.3');
+
+  // Looping chat playback: messages land, typing resolves into the report,
+  // hold a few seconds, fade out, replay.
+  const msgs = ['#heroMsg1', '#heroMsg2', '#heroCard'];
+  gsap.set([...msgs, '#heroTyping'], { autoAlpha: 0 });
+  const popIn = { y: 18, autoAlpha: 0, scale: 0.97 };
+  const popTo = { y: 0, autoAlpha: 1, scale: 1, duration: 0.5, ease: 'back.out(1.6)' };
+  gsap.timeline({ repeat: -1, repeatDelay: 3, delay: 2.2 })
+    .fromTo('#heroMsg1', popIn, popTo)
+    .fromTo('#heroMsg2', popIn, popTo, '+=0.5')
+    .fromTo('#heroTyping', { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.3 }, '+=0.3')
+    .to('#heroTyping', { autoAlpha: 0, duration: 0.25 }, '+=1.2')
+    .fromTo('#heroCard', popIn, popTo, '-=0.05')
+    // Wrap-up beat: conversation fades before the next replay.
+    .to(msgs, { autoAlpha: 0, y: -10, duration: 0.4, stagger: 0.06 }, '+=3');
 
   // Parallax exit: hero content drifts up + fades as user scrolls away.
   gsap.to('.hero-inner', {
@@ -242,6 +286,21 @@ function safeInit(fn) {
   }
 }
 
+function initWhat() {
+  if (!MOTION) return;
+  gsap.from('#whatH2', {
+    scrollTrigger: { trigger: '#whatH2', start: 'top 85%' },
+    y: 40, autoAlpha: 0, duration: 0.8,
+  });
+  // Narrative lines reveal one by one as they scroll into view.
+  gsap.utils.toArray('#what .what-line, #what .what-note').forEach((line) => {
+    gsap.from(line, {
+      scrollTrigger: { trigger: line, start: 'top 86%', toggleActions: 'play none none reverse' },
+      y: 28, autoAlpha: 0, duration: 0.7,
+    });
+  });
+}
+
 function initKickers() {
   if (!MOTION) return;
   gsap.utils.toArray('.act .kicker').forEach((k) => {
@@ -251,6 +310,11 @@ function initKickers() {
 
 function initPrinciples() {
   if (!MOTION) return;
+  // Manifesto reveal: the architecture thesis lands here, after the product story.
+  gsap.from('#thesisH2, .thesis-lead', {
+    scrollTrigger: { trigger: '#thesisH2', start: 'top 82%' },
+    y: 50, autoAlpha: 0, stagger: 0.15, duration: 0.9,
+  });
   gsap.utils.toArray('.principle').forEach((row) => {
     gsap.timeline({
       scrollTrigger: { trigger: row, start: 'top 80%', toggleActions: 'play none none reverse' },
@@ -353,6 +417,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setStaticText(LANG);
   safeInit(initLenis);
   safeInit(initHero);
+  safeInit(initWhat);
   safeInit(initKickers);
   safeInit(initPrinciples);
   safeInit(initArch);
