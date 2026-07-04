@@ -27,6 +27,12 @@ export class FlowOrchestratorService {
   async handle(input: InboundMessage): Promise<OutboundReply> {
     const existing = this.sessions.get(input.threadKey);
 
+    // 0. Explicit close action → terminate session (no-op if it does not exist).
+    if (input.action && input.action.type === 'close') {
+      this.sessions.close(input.threadKey);
+      return { kind: 'text', text: existing?.locale === 'en' ? 'Session closed.' : '会话已关闭。' };
+    }
+
     // 1. New thread + keyword → create session, render first step.
     if (!existing || existing.state === 'CLOSED') {
       const matched = input.text ? this.registry.match(input.text) : undefined;
@@ -35,7 +41,9 @@ export class FlowOrchestratorService {
       return this.renderStep(matched.config, session);
     }
 
-    const config = this.registry.get(existing.command)!;
+    // Stale/removed command on an existing session → friendly text, not a crash.
+    const config = this.registry.get(existing.command);
+    if (!config) return { kind: 'text', text: 'Unknown command. Try: diagnose / 诊断' };
 
     // 2. Card action → record value, advance.
     if (input.action && typeof input.action.value === 'string') {
@@ -56,6 +64,8 @@ export class FlowOrchestratorService {
         collected: existing.collected,
         prompt: input.text,
       });
+      // Report delivered — session now awaits the user's feedback on the diagnosis.
+      existing.state = 'AWAITING_FEEDBACK';
       this.sessions.save(existing);
       return { kind: 'text', text: out.result };
     }
@@ -69,11 +79,11 @@ export class FlowOrchestratorService {
     while (idx < config.steps.length && !this.steps.shouldRender(config.steps[idx], session.collected)) {
       idx += 1;
     }
+    session.stepIndex = idx;
+    this.sessions.save(session);
     if (idx >= config.steps.length) {
       return { kind: 'text', text: session.locale === 'en' ? 'Ready. Describe the issue.' : '准备就绪，请描述问题。' };
     }
-    session.stepIndex = idx;
-    this.sessions.save(session);
     const card = this.steps.renderStepCard(config.steps[idx], {
       locale: session.locale,
       threadKey: session.threadKey,

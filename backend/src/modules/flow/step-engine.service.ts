@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { FlowStep, Locale } from '../../interfaces/flow';
 import { CardSpec } from './card.types';
+import { renderTemplate } from './flow-template';
 
 export interface StepContext {
   locale: Locale;
@@ -20,8 +21,11 @@ export class StepEngineService {
   /** Render a step to a CardSpec. choice → buttons; input → form. */
   renderStepCard(step: FlowStep, ctx: StepContext): CardSpec {
     const base = { stepId: step.id, tk: ctx.threadKey, namespace: ctx.namespace, locale: ctx.locale };
-    const title = step.i18n.title[ctx.locale];
-    const note = step.i18n.note?.[ctx.locale];
+    // Card copy may embed {{ collected.field }} placeholders → resolve against collected values.
+    const vars = { collected: ctx.collected };
+    const title = renderTemplate(step.i18n.title[ctx.locale], vars);
+    const rawNote = step.i18n.note?.[ctx.locale];
+    const note = rawNote !== undefined ? renderTemplate(rawNote, vars) : undefined;
     const header = { title, color: 'turquoise' };
     const lead = note ? [{ type: 'note' as const, text: note }] : [];
 
