@@ -9,6 +9,74 @@ parts that genuinely need analysis to a **short-lived AI worker**.
 
 ---
 
+## Overview / 概览
+
+**EN** — Teams run ops commands inside an IM chat (e.g. "diagnose this failure"). A naive
+bot pipes everything through an LLM, which is slow, non-deterministic, and expensive for the
+90% of the interaction that is just menu-picking. This demo splits the bot into two layers:
+
+- **Deterministic gatekeeper (no LLM)** — a long-running NestJS service that owns *everything
+  predictable*: matching a keyword to a command, walking the user through option cards
+  (env → branch → …), and managing per-thread session lifecycle. Zero AI, so it's fast,
+  cheap, and 100% reproducible.
+- **Short-lived AI worker (pure brain)** — spawned *only* for the one step that genuinely
+  needs reasoning (analyzing the failure). It takes structured input, returns a report, and
+  dies. In production it's a `claude -p` subprocess; here it's mocked. It never touches the
+  IM channel — the gatekeeper owns all I/O.
+
+The dividing line: **if the behavior can be written down as a flow, the gatekeeper does it;
+only open-ended analysis reaches the LLM.**
+
+**中文** — 团队在 IM 会话里跑运维命令（比如「诊断这次失败」）。朴素做法是把所有输入都灌给
+LLM——但整个交互里 90% 只是选菜单，用 LLM 又慢、又不确定、又贵。本 demo 把机器人拆成两层：
+
+- **确定性门卫（无 LLM）** —— 常驻的 NestJS 服务，掌管*所有可预测的部分*：关键词匹配命令、
+  用选项卡片带用户逐步走完（环境 → 分支 → …）、管理每个线程的 session 生命周期。零 AI，
+  所以快、便宜、100% 可复现。
+- **短命 AI worker（纯大脑）** —— *只*在真正需要推理的那一步（分析失败原因）被拉起。吃结构化
+  输入、吐一份报告、然后退出。生产环境是一个 `claude -p` 子进程，这里用 mock 代替。它从不碰
+  IM 通道——所有 I/O 都归门卫。
+
+分界线：**能写成流程的，门卫全包；只有开放式的分析才交给 LLM。**
+
+## Core concepts / 核心概念
+
+| Concept | EN | 中文 |
+|---|---|---|
+| **Deterministic gatekeeper** | No-LLM service owning routing + lifecycle + card rendering | 无 LLM 服务，掌管路由 + 生命周期 + 卡片渲染 |
+| **Config-driven flow** | A capability = one `flows/<cmd>.json` (`triggers / steps / closePolicy / worker.skill`); no code changes to routing | 一个能力 = 一份 `flows/<cmd>.json`；不动路由代码 |
+| **Stateless StepEngine** | Renders the next option card from config + session state; holds no state itself | 依据 config + session 状态渲染下一张卡片，自身不存状态 |
+| **Thread-isolated session** | One state machine per IM thread: `ACTIVE → AWAITING_FEEDBACK → CLOSED`, plus an idle sweeper | 每个 IM 线程一个状态机 + 空闲清扫 |
+| **Short-lived worker** | Pure-brain subprocess for the analysis step; returns a report, never touches the IM channel | 分析步骤的纯大脑子进程，返回报告，不碰 IM 通道 |
+
+## Flow / 运行流程
+
+```
+IM thread                Gateway            Orchestrator + StepEngine        AI worker
+   │  "diagnose"    POST /message   ──►  match command, upsert session
+   │  ◄───────────────────────────────  render env card
+   │  pick env=uat  ──────────────────►  advance step, render branch card
+   │  ◄───────────────────────────────  render branch card
+   │  pick branch   ──────────────────►  steps done → "ready, describe the issue"
+   │  free text     ──────────────────►  spawn worker  ─────────────────►  analyze
+   │  ◄───────────────────────────────  deliver report  ◄────────────────  return result, exit
+   │                                     session → AWAITING_FEEDBACK
+```
+
+**EN** — Keyword enters the gatekeeper, which matches it to a config-defined flow and
+upserts a thread session. The stateless StepEngine renders each option card; the user's
+picks advance `stepIndex`. Once all steps are satisfied the session is "ready"; the next
+free-text message triggers the short-lived worker, whose report the gatekeeper delivers back
+to the thread and moves the session to `AWAITING_FEEDBACK`.
+
+**中文** — 关键词进入门卫，匹配到 config 定义的流程并 upsert 线程 session。无状态 StepEngine
+逐张渲染选项卡片，用户的选择推进 `stepIndex`。所有步骤满足后 session 进入「就绪」；下一条自由
+文本触发短命 worker，门卫把它的报告发回线程，并将 session 转入 `AWAITING_FEEDBACK`。
+
+`bash demo.sh` drives exactly this loop end to end. / `bash demo.sh` 就是端到端跑一遍这个回路。
+
+---
+
 ## English
 
 ### What's inside
