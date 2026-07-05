@@ -7,7 +7,7 @@ import { FlowRegistryService } from './modules/flow/flow-registry.service';
 import { StepEngineService } from './modules/flow/step-engine.service';
 import { SessionModule } from './modules/session/session.module';
 import { SessionSweeperService } from './modules/session/session-sweeper.service';
-import { WorkerService } from './modules/worker/worker.service';
+import { ClaudeRunnerService } from './modules/worker/claude-runner.service';
 import { QueueModule } from './modules/queue/queue.module';
 import { SlackAdapterService } from './modules/channels/slack/slack-adapter.service';
 import { LarkAdapterService } from './modules/channels/lark/lark-adapter.service';
@@ -28,7 +28,7 @@ import { ChannelPushRegistry } from './modules/channels/channel-push.registry';
     FlowRegistryService,
     StepEngineService,
     SessionSweeperService,
-    WorkerService,
+    ClaudeRunnerService,
     SlackAdapterService,
     LarkAdapterService,
     ChannelPushRegistry,
