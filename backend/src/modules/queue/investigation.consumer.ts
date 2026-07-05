@@ -23,7 +23,7 @@ export class InvestigationConsumer extends WorkerHost {
 
   async process(job: Job<InvestigationJob>): Promise<void> {
     const d = job.data;
-    let out = await this.runner.run(buildInvestigationPrompt({ ...d, grammar: CARD_GRAMMAR_PROMPT }), null);
+    let out = await this.runner.run(buildInvestigationPrompt({ ...d, grammar: CARD_GRAMMAR_PROMPT }), d.claudeSessionId ?? null);
 
     if (!out.ok || !isWorkerSuccess(out.stdout)) {
       await this.deliver(d, { kind: 'text', text: d.locale === 'en' ? 'Investigation failed — please describe the issue again to retry.' : '调查失败——请重新描述问题以重试。' });
@@ -47,6 +47,7 @@ export class InvestigationConsumer extends WorkerHost {
     await this.deliver(d, reply);
     await this.sessions.setState(d.threadKey, 'AWAITING_FEEDBACK');
     await this.sessions.clearNag(d.threadKey);
+    if (sessionId) await this.sessions.setClaudeSession(d.threadKey, sessionId);
   }
 
   private async deliver(d: InvestigationJob, reply: OutboundReply): Promise<void> {

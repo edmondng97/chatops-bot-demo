@@ -26,6 +26,7 @@ export class SessionService {
       collected: doc.collected,
       updatedAt: doc.updatedAt,
       nagSentAt: doc.nagSentAt,
+      claudeSessionId: doc.claudeSessionId,
     };
   }
 
@@ -64,6 +65,11 @@ export class SessionService {
 
   async markNagged(threadKey: string, now: number): Promise<void> {
     await this.model.updateOne({ threadKey }, { $set: { nagSentAt: now } });
+  }
+
+  // Persists the claude CLI session id so follow-up investigations in the same thread resume it.
+  async setClaudeSession(threadKey: string, claudeSessionId: string): Promise<void> {
+    await this.model.updateOne({ threadKey }, { $set: { claudeSessionId } });
   }
 
   // Clears the nag stamp so the next idle period starts a fresh nag→close cycle

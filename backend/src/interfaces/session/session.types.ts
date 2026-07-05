@@ -17,4 +17,5 @@ export interface Session {
   collected: Record<string, unknown>;
   updatedAt: number; // ms epoch; doubles as lastActivityAt for the sweeper
   nagSentAt?: number; // ms epoch; sweeper nag dedupe
+  claudeSessionId?: string; // claude CLI session for this thread — resumed across investigations
 }

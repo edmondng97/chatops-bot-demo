@@ -77,4 +77,17 @@ describe('FlowOrchestratorService', () => {
     expect(reply).toEqual({ kind: 'text', text: expect.stringContaining('Investigation in progress') });
     expect((await sessions.get('t'))?.state).toBe('INVESTIGATING');
   });
+
+  it("enqueue carries the session's persisted claudeSessionId", async () => {
+    const { orch, sessions, queue } = build();
+    await orch.handle({ threadKey: 't', channel: 'slack', threadRef: { channel: 'C', threadTs: '1' }, text: 'diagnose' });
+    await orch.handle({ threadKey: 't', channel: 'slack', threadRef: { channel: 'C', threadTs: '1' }, action: { stepId: 'env', value: 'uat' } });
+    await orch.handle({ threadKey: 't', channel: 'slack', threadRef: { channel: 'C', threadTs: '1' }, action: { stepId: 'branch', value: 'main' } });
+    const s = await sessions.get('t');
+    s!.claudeSessionId = 'cs-9';
+    await sessions.save(s!);
+    await orch.handle({ threadKey: 't', channel: 'slack', threadRef: { channel: 'C', threadTs: '1' }, text: 'payment fails' });
+    expect(queue.enqueue).toHaveBeenCalledWith(expect.objectContaining({ claudeSessionId: 'cs-9' }));
+  });
+
 });

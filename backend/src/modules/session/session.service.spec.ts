@@ -68,4 +68,11 @@ describe('SessionService (mongo)', () => {
     await svc.clearNag('t6');
     expect((await svc.get('t6'))?.nagSentAt).toBeUndefined();
   });
+
+  it('setClaudeSession persists and round-trips', async () => {
+    await svc.upsert('t6', 'diagnose', 'en', 'slack', ref);
+    await svc.setClaudeSession('t6', 'cs-1');
+    expect((await svc.get('t6'))?.claudeSessionId).toBe('cs-1');
+  });
+
 });

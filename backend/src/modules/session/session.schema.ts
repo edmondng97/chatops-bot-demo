@@ -13,6 +13,7 @@ export class SessionDoc {
   @Prop({ type: Object, default: {} }) collected!: Record<string, unknown>;
   @Prop({ required: true }) updatedAt!: number;
   @Prop() nagSentAt?: number;
+  @Prop() claudeSessionId?: string;
 }
 export type SessionDocument = HydratedDocument<SessionDoc>;
 export const SessionSchema = SchemaFactory.createForClass(SessionDoc);

@@ -70,7 +70,7 @@ export class FlowOrchestratorService {
         locale: existing.locale,
         skill: config.worker.skill,
         collected: existing.collected,
-        issue: input.text,
+        issue: input.text, claudeSessionId: existing.claudeSessionId,
       });
       await this.sessions.setState(existing.threadKey, 'INVESTIGATING');
       return { kind: 'text', text: existing.locale === 'en' ? 'Investigating… I will reply in this thread.' : '调查中…结果会回复在本主题内。' };

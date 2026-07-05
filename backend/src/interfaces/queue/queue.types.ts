@@ -11,4 +11,5 @@ export interface InvestigationJob {
   skill: string;
   collected: Record<string, unknown>;
   issue: string;
+  claudeSessionId?: string; // resume the thread's claude session across investigations
 }

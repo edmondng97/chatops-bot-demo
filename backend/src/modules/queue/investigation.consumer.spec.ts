@@ -1,7 +1,7 @@
 import { InvestigationConsumer } from './investigation.consumer';
 
 describe('InvestigationConsumer.process', () => {
-  let sessions: { setState: jest.Mock; clearNag: jest.Mock };
+  let sessions: { setState: jest.Mock; clearNag: jest.Mock; setClaudeSession: jest.Mock };
   let push: { push: jest.Mock };
   let runner: { run: jest.Mock };
   let consumer: InvestigationConsumer;
@@ -10,7 +10,7 @@ describe('InvestigationConsumer.process', () => {
   const okStdout = (result: string) => JSON.stringify({ session_id: 's1', result, is_error: false, subtype: 'success' });
 
   beforeEach(() => {
-    sessions = { setState: jest.fn().mockResolvedValue(undefined), clearNag: jest.fn().mockResolvedValue(undefined) };
+    sessions = { setState: jest.fn().mockResolvedValue(undefined), clearNag: jest.fn().mockResolvedValue(undefined), setClaudeSession: jest.fn().mockResolvedValue(undefined) };
     push = { push: jest.fn().mockResolvedValue(undefined) };
     runner = { run: jest.fn() };
     consumer = new InvestigationConsumer(sessions as any, push as any, runner as any);
@@ -58,4 +58,19 @@ describe('InvestigationConsumer.process', () => {
     expect(sessions.setState).toHaveBeenCalledWith('t', 'AWAITING_FEEDBACK');
     expect(sessions.clearNag).toHaveBeenCalledWith('t');
   });
+
+  it('resumes the persisted claude session and persists the parsed one', async () => {
+    runner.run.mockResolvedValue({ stdout: okStdout('{"title":"D","blocks":[{"type":"text","text":"x"}]}'), ok: true });
+    await consumer.process({ data: { ...job.data, claudeSessionId: 'prev' } } as any);
+    expect(runner.run.mock.calls[0][1]).toBe('prev'); // first run resumes the thread's claude session
+    expect(sessions.setClaudeSession).toHaveBeenCalledWith('t', 's1');
+  });
+
+  it('starts a fresh claude session when none is persisted', async () => {
+    runner.run.mockResolvedValue({ stdout: okStdout('{"title":"D","blocks":[{"type":"text","text":"x"}]}'), ok: true });
+    await consumer.process(job as any);
+    expect(runner.run.mock.calls[0][1]).toBeNull();
+    expect(sessions.setClaudeSession).toHaveBeenCalledWith('t', 's1');
+  });
+
 });
