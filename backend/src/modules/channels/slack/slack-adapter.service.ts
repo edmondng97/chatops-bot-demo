@@ -34,7 +34,12 @@ export class SlackAdapterService implements OnModuleInit, OnModuleDestroy {
         this.logger.error(`orchestrator failed for ${inbound.threadKey}`, err as Error);
         reply = { kind: 'text', text: 'Something went wrong. Please try again. / 出错了，请重试。' };
       }
-      await app.client.chat.postMessage({ channel, thread_ts: threadTs, ...toSlackMessage(reply) });
+      try {
+        await app.client.chat.postMessage({ channel, thread_ts: threadTs, ...toSlackMessage(reply) });
+      } catch (err) {
+        // Failed to post reply message. Degrade gracefully and log the error instead of throwing.
+        this.logger.error(`failed to post Slack message for ${inbound.threadKey}`, err as Error);
+      }
     };
 
     // DM messages and channel mentions are the two entry points.
