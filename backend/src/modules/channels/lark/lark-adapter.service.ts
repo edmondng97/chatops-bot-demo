@@ -14,7 +14,7 @@ export class LarkAdapterService implements OnModuleInit {
     private readonly pushRegistry: ChannelPushRegistry,
   ) {}
 
-  onModuleInit(): void {
+  async onModuleInit(): Promise<void> {
     const appId = process.env.LARK_APP_ID;
     const appSecret = process.env.LARK_APP_SECRET;
     if (!appId || !appSecret) {
@@ -23,8 +23,39 @@ export class LarkAdapterService implements OnModuleInit {
     }
 
     const client = new Lark.Client({ appId, appSecret });
-    const wsClient = new Lark.WSClient({ appId, appSecret });
+    // onReady/onError let us await the actual first-handshake outcome, since WSClient#start()
+    // itself resolves immediately without waiting for the connection. Note: the SDK defaults to
+    // infinite auto-reconnect, so onError never fires for a purely transient network failure —
+    // the timeout below bounds startup instead of hanging Nest bootstrap forever.
+    const connected = new Promise<void>((resolve, reject) => {
+      const wsClient = new Lark.WSClient({
+        appId,
+        appSecret,
+        onReady: () => resolve(),
+        onError: (err) => reject(err),
+      });
+      this.startWs(wsClient, client);
+    });
+    const timeout = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('Lark WebSocket handshake timed out')), 15_000),
+    );
 
+    try {
+      await Promise.race([connected, timeout]);
+      this.pushRegistry.register('lark', async (ref, reply) => {
+        const { msgType, content } = toLarkMessage(reply);
+        await client.im.v1.message.reply({
+          path: { message_id: ref.replyTo },
+          data: { msg_type: msgType, content },
+        });
+      });
+      this.logger.log('Lark adapter connected (WebSocket long connection)');
+    } catch (err) {
+      this.logger.error('Lark adapter failed to start — adapter disabled', err as Error);
+    }
+  }
+
+  private startWs(wsClient: Lark.WSClient, client: Lark.Client): void {
     const handle = async (inbound: LarkInbound | null) => {
       if (!inbound) return;
       let reply: OutboundReply;
@@ -57,13 +88,5 @@ export class LarkAdapterService implements OnModuleInit {
         },
       } as never),
     });
-    this.pushRegistry.register('lark', async (ref, reply) => {
-      const { msgType, content } = toLarkMessage(reply);
-      await client.im.v1.message.reply({
-        path: { message_id: ref.replyTo },
-        data: { msg_type: msgType, content },
-      });
-    });
-    this.logger.log('Lark adapter connected (WebSocket long connection)');
   }
 }
