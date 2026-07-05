@@ -51,6 +51,12 @@ describe('toSlackMessage', () => {
     expect(input.label.text).toBe('service name');
   });
 
+  it('maps turquoise to its hex color', () => {
+    const c: CardSpec = { header: { title: 'X', color: 'turquoise' }, blocks: [] };
+    const att = (toSlackMessage({ kind: 'card', card: c }).attachments as any[])[0];
+    expect(att.color).toBe('#2EB6BE');
+  });
+
   it('falls back to default color for unknown color names', () => {
     const c: CardSpec = { header: { title: 'X', color: 'weird' }, blocks: [] };
     const att = (toSlackMessage({ kind: 'card', card: c }).attachments as any[])[0];

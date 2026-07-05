@@ -7,6 +7,7 @@ const COLOR_MAP: Record<string, string> = {
   red: '#E01E5A',
   orange: '#ECB22E',
   grey: '#616061',
+  turquoise: '#2EB6BE',
 };
 const DEFAULT_COLOR = '#616061';
 
