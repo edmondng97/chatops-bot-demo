@@ -14,7 +14,7 @@
 
 /* ---------- base ---------- */
 * { box-sizing: border-box; margin: 0; }
-html { scroll-behavior: auto; } /* Lenis owns smoothing */
+html { scroll-behavior: auto; overflow-x: hidden; } /* Lenis owns smoothing */
 body {
   background: var(--bg);
   color: var(--text);
@@ -225,6 +225,11 @@ a { color: inherit; text-decoration: none; }
 @media (max-width: 900px) {
   .act { padding: 12vh 18px; }
   .nav-links { gap: 16px; font-size: 13px; }
+}
+@media (max-width: 600px) {
+  .nav { flex-wrap: wrap; gap: 8px; padding: 10px 16px; }
+  .nav-links { flex-wrap: wrap; gap: 8px 14px; font-size: 12px; }
+  .nav-links a { white-space: nowrap; }
 }
 
 /* ---------- reduced motion ---------- */
