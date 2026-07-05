@@ -25,7 +25,8 @@ export function mapSlackMessage(event: SlackMessageEvent): InboundMessage | null
   if (event.bot_id || event.subtype) return null; // loop guard / edits
   const text = (event.text ?? '').replace(/^<@[^>]+>\s*/, '').trim();
   if (!text) return null;
-  return { threadKey: threadKeyOf(event.channel, event.thread_ts ?? event.ts), text };
+  // TODO: Task 3 populates threadRef with real {channel, threadTs} for reply routing.
+  return { threadKey: threadKeyOf(event.channel, event.thread_ts ?? event.ts), channel: 'slack', threadRef: {}, text };
 }
 
 export function mapSlackAction(payload: SlackActionPayload): InboundMessage | null {
@@ -33,9 +34,9 @@ export function mapSlackAction(payload: SlackActionPayload): InboundMessage | nu
   try {
     if (payload.actionId === 'card_input') {
       const base = JSON.parse(payload.blockId ?? '{}') as Record<string, unknown>;
-      return { threadKey, action: { ...base, value: payload.value ?? '' } };
+      return { threadKey, channel: 'slack', threadRef: {}, action: { ...base, value: payload.value ?? '' } };
     }
-    return { threadKey, action: JSON.parse(payload.value ?? '') as Record<string, unknown> };
+    return { threadKey, channel: 'slack', threadRef: {}, action: JSON.parse(payload.value ?? '') as Record<string, unknown> };
   } catch {
     return null; // malformed payload — ignore rather than crash the socket
   }

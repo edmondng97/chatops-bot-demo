@@ -12,9 +12,15 @@ export class SessionSweeperService implements OnModuleInit, OnModuleDestroy {
 
   onModuleInit(): void {
     this.timer = setInterval(() => {
-      this.sessions.sweepIdle(SessionSweeperService.IDLE_MS, Date.now());
+      // TODO: Task 8 rewrites this to cover AWAITING_FEEDBACK nagging + full idle policy.
+      void this.sweep();
     }, SessionSweeperService.TICK_MS);
     this.timer.unref?.();
+  }
+
+  private async sweep(): Promise<void> {
+    const idle = await this.sessions.findIdle('ACTIVE', SessionSweeperService.IDLE_MS, Date.now());
+    for (const s of idle) await this.sessions.close(s.threadKey);
   }
 
   onModuleDestroy(): void {

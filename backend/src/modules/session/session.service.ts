@@ -1,58 +1,51 @@
 import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 import { Locale } from '../../interfaces/flow';
-import { Session } from '../../interfaces/session';
+import { ChannelKind, Session, SessionState, ThreadRef } from '../../interfaces/session';
+import { SessionDoc } from './session.schema';
 
 /**
- * In-memory session store. In production this is a MongoDB `sessions` collection
- * keyed by a unique `threadKey` index (upsert per thread); CLOSED sessions are
- * retained permanently to feed a future learning loop. State never degrades to files.
+ * MongoDB-backed session store. One thread = one session (unique threadKey index).
+ * CLOSED sessions are retained permanently to feed a future learning loop.
  */
 @Injectable()
 export class SessionService {
-  private readonly byThread = new Map<string, Session>();
+  constructor(@InjectModel(SessionDoc.name) private readonly model: Model<SessionDoc>) {}
 
-  upsert(threadKey: string, command: string, locale: Locale): Session {
-    const existing = this.byThread.get(threadKey);
-    if (existing) return existing;
-    const session: Session = {
-      threadKey,
-      command,
-      state: 'ACTIVE',
-      locale,
-      stepIndex: 0,
-      collected: {},
-      updatedAt: this.now(),
-    };
-    this.byThread.set(threadKey, session);
-    return session;
+  async upsert(threadKey: string, command: string, locale: Locale, channel: ChannelKind, threadRef: ThreadRef): Promise<Session> {
+    const doc = await this.model.findOneAndUpdate(
+      { threadKey },
+      { $setOnInsert: { threadKey, command, locale, channel, threadRef, state: 'ACTIVE', stepIndex: 0, collected: {}, updatedAt: Date.now() } },
+      { new: true, upsert: true },
+    ).lean();
+    return doc as unknown as Session;
   }
 
-  get(threadKey: string): Session | undefined {
-    return this.byThread.get(threadKey);
+  async get(threadKey: string): Promise<Session | undefined> {
+    const doc = await this.model.findOne({ threadKey }).lean();
+    return (doc ?? undefined) as Session | undefined;
   }
 
-  save(session: Session): void {
-    this.byThread.set(session.threadKey, session);
+  async save(session: Session): Promise<void> {
+    session.updatedAt = Date.now();
+    const { threadKey, ...rest } = session;
+    await this.model.updateOne({ threadKey }, { $set: rest });
   }
 
-  close(threadKey: string): void {
-    const s = this.byThread.get(threadKey);
-    if (s) s.state = 'CLOSED'; // permanent terminal state
+  async setState(threadKey: string, state: SessionState): Promise<void> {
+    await this.model.updateOne({ threadKey }, { $set: { state, updatedAt: Date.now() } });
   }
 
-  /** Close ACTIVE sessions idle longer than maxIdleMs. Returns the closed keys. */
-  sweepIdle(maxIdleMs: number, now: number): string[] {
-    const closed: string[] = [];
-    for (const s of this.byThread.values()) {
-      if (s.state === 'ACTIVE' && now - s.updatedAt >= maxIdleMs) {
-        s.state = 'CLOSED';
-        closed.push(s.threadKey);
-      }
-    }
-    return closed;
+  async close(threadKey: string): Promise<void> {
+    await this.setState(threadKey, 'CLOSED');
   }
 
-  private now(): number {
-    return Date.now();
+  async findIdle(state: SessionState, idleMs: number, now: number): Promise<Session[]> {
+    return (await this.model.find({ state, updatedAt: { $lte: now - idleMs } }).lean()) as unknown as Session[];
+  }
+
+  async markNagged(threadKey: string, now: number): Promise<void> {
+    await this.model.updateOne({ threadKey }, { $set: { nagSentAt: now } });
   }
 }
