@@ -30,8 +30,7 @@ export function mapLarkMessage(event: LarkMessageEvent): LarkInbound | null {
   text = text.replace(/@_user_\d+\s*/g, '').trim();
   if (!text) return null;
   const m = event.message;
-  // TODO: Task 3 populates threadRef with a real {replyTo} for reply routing.
-  return { threadKey: m.root_id ?? m.message_id, channel: 'lark', threadRef: {}, text, replyTo: m.message_id };
+  return { threadKey: m.root_id ?? m.message_id, channel: 'lark', threadRef: { replyTo: m.message_id }, text, replyTo: m.message_id };
 }
 
 export function mapLarkCardAction(event: LarkCardActionEvent): LarkInbound | null {
@@ -39,5 +38,5 @@ export function mapLarkCardAction(event: LarkCardActionEvent): LarkInbound | nul
   if (!base || typeof base.tk !== 'string') return null;
   const action =
     event.action.tag === 'input' ? { ...base, value: event.action.input_value ?? '' } : base;
-  return { threadKey: base.tk, channel: 'lark', threadRef: {}, action, replyTo: event.context.open_message_id };
+  return { threadKey: base.tk, channel: 'lark', threadRef: { replyTo: event.context.open_message_id }, action, replyTo: event.context.open_message_id };
 }

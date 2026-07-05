@@ -5,7 +5,7 @@ describe('mapSlackMessage', () => {
     expect(mapSlackMessage({ channel: 'C1', ts: '111.1', text: 'diagnose' })).toEqual({
       threadKey: 'C1:111.1',
       channel: 'slack',
-      threadRef: {},
+      threadRef: { channel: 'C1', threadTs: '111.1' },
       text: 'diagnose',
     });
   });
@@ -14,7 +14,7 @@ describe('mapSlackMessage', () => {
     expect(mapSlackMessage({ channel: 'C1', ts: '222.2', thread_ts: '111.1', text: 'hi' })).toEqual({
       threadKey: 'C1:111.1',
       channel: 'slack',
-      threadRef: {},
+      threadRef: { channel: 'C1', threadTs: '111.1' },
       text: 'hi',
     });
   });
@@ -38,7 +38,7 @@ describe('mapSlackAction', () => {
     ).toEqual({
       threadKey: 'C1:111.1',
       channel: 'slack',
-      threadRef: {},
+      threadRef: { channel: 'C1', threadTs: '111.1' },
       action: { stepId: 'env', tk: 't1', namespace: 'wizard', value: 'prod' },
     });
   });
@@ -50,7 +50,7 @@ describe('mapSlackAction', () => {
     ).toEqual({
       threadKey: 'C1:111.1',
       channel: 'slack',
-      threadRef: {},
+      threadRef: { channel: 'C1', threadTs: '111.1' },
       action: { stepId: 'svc', tk: 't1', namespace: 'wizard', value: 'api-gw' },
     });
   });

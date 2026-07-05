@@ -1,5 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import * as Lark from '@larksuiteoapi/node-sdk';
+import { ChannelPushRegistry } from '../channel-push.registry';
 import { FlowOrchestratorService, OutboundReply } from '../../flow/flow-orchestrator.service';
 import { toLarkMessage } from './lark-card-renderer';
 import { LarkInbound, mapLarkCardAction, mapLarkMessage } from './lark-inbound';
@@ -8,7 +9,10 @@ import { LarkInbound, mapLarkCardAction, mapLarkMessage } from './lark-inbound';
 export class LarkAdapterService implements OnModuleInit {
   private readonly logger = new Logger(LarkAdapterService.name);
 
-  constructor(private readonly orchestrator: FlowOrchestratorService) {}
+  constructor(
+    private readonly orchestrator: FlowOrchestratorService,
+    private readonly pushRegistry: ChannelPushRegistry,
+  ) {}
 
   onModuleInit(): void {
     const appId = process.env.LARK_APP_ID;
@@ -52,6 +56,13 @@ export class LarkAdapterService implements OnModuleInit {
           return undefined; // no in-place card update; we reply in thread instead
         },
       } as never),
+    });
+    this.pushRegistry.register('lark', async (ref, reply) => {
+      const { msgType, content } = toLarkMessage(reply);
+      await client.im.v1.message.reply({
+        path: { message_id: ref.replyTo },
+        data: { msg_type: msgType, content },
+      });
     });
     this.logger.log('Lark adapter connected (WebSocket long connection)');
   }

@@ -9,6 +9,7 @@ import { SessionSweeperService } from './modules/session/session-sweeper.service
 import { WorkerService } from './modules/worker/worker.service';
 import { SlackAdapterService } from './modules/channels/slack/slack-adapter.service';
 import { LarkAdapterService } from './modules/channels/lark/lark-adapter.service';
+import { ChannelPushRegistry } from './modules/channels/channel-push.registry';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { LarkAdapterService } from './modules/channels/lark/lark-adapter.service
     WorkerService,
     SlackAdapterService,
     LarkAdapterService,
+    ChannelPushRegistry,
   ],
 })
 export class AppModule {}
