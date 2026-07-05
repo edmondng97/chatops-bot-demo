@@ -62,4 +62,19 @@ describe('FlowOrchestratorService', () => {
     expect(setStateSpy).toHaveBeenCalledWith('t', 'INVESTIGATING');
     expect(reply).toEqual({ kind: 'text', text: expect.stringContaining('Investigating') });
   });
+
+  it('guards against duplicate enqueue while already INVESTIGATING', async () => {
+    const { orch, sessions, queue } = build();
+    await orch.handle({ threadKey: 't', channel: 'slack', threadRef: { channel: 'C', threadTs: '1' }, text: 'diagnose' });
+    await orch.handle({ threadKey: 't', channel: 'slack', threadRef: { channel: 'C', threadTs: '1' }, action: { stepId: 'env', value: 'uat' } });
+    await orch.handle({ threadKey: 't', channel: 'slack', threadRef: { channel: 'C', threadTs: '1' }, action: { stepId: 'branch', value: 'main' } });
+    await orch.handle({ threadKey: 't', channel: 'slack', threadRef: { channel: 'C', threadTs: '1' }, text: 'payment fails' }); // -> enqueues, sets INVESTIGATING
+    queue.enqueue.mockClear();
+
+    const reply = await orch.handle({ threadKey: 't', channel: 'slack', threadRef: { channel: 'C', threadTs: '1' }, text: 'another message' });
+
+    expect(queue.enqueue).not.toHaveBeenCalled();
+    expect(reply).toEqual({ kind: 'text', text: expect.stringContaining('Investigation in progress') });
+    expect((await sessions.get('t'))?.state).toBe('INVESTIGATING');
+  });
 });

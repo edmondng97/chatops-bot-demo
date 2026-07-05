@@ -60,6 +60,9 @@ export class FlowOrchestratorService {
 
     // 3. Free text after wizard → enqueue investigation, acknowledge asynchronously.
     if (input.text && existing.stepIndex >= config.steps.length) {
+      if (existing.state === 'INVESTIGATING') {
+        return { kind: 'text', text: existing.locale === 'en' ? 'Investigation in progress — please wait for the report in this thread.' : '调查进行中——请等待本主题内的报告。' };
+      }
       await this.queue.enqueue({
         threadKey: existing.threadKey,
         channel: existing.channel,
