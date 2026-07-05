@@ -7,11 +7,11 @@ import { FlowRegistryService } from './modules/flow/flow-registry.service';
 import { StepEngineService } from './modules/flow/step-engine.service';
 import { SessionModule } from './modules/session/session.module';
 import { SessionSweeperService } from './modules/session/session-sweeper.service';
-import { ClaudeRunnerService } from './modules/worker/claude-runner.service';
 import { QueueModule } from './modules/queue/queue.module';
 import { SlackAdapterService } from './modules/channels/slack/slack-adapter.service';
 import { LarkAdapterService } from './modules/channels/lark/lark-adapter.service';
-import { ChannelPushRegistry } from './modules/channels/channel-push.registry';
+import { ChannelsModule } from './modules/channels/channels.module';
+import { WorkerModule } from './modules/worker/worker.module';
 
 @Module({
   imports: [
@@ -21,6 +21,8 @@ import { ChannelPushRegistry } from './modules/channels/channel-push.registry';
       connection: { host: process.env.REDIS_HOST ?? 'localhost', port: Number(process.env.REDIS_PORT ?? 6380) },
     }),
     SessionModule,
+    ChannelsModule,
+    WorkerModule,
     QueueModule,
   ],
   providers: [
@@ -28,10 +30,8 @@ import { ChannelPushRegistry } from './modules/channels/channel-push.registry';
     FlowRegistryService,
     StepEngineService,
     SessionSweeperService,
-    ClaudeRunnerService,
     SlackAdapterService,
     LarkAdapterService,
-    ChannelPushRegistry,
   ],
 })
 export class AppModule {}
