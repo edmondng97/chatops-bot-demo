@@ -64,9 +64,14 @@ export class SlackAdapterService implements OnModuleInit, OnModuleDestroy {
       await handle(inbound, channel, threadTs);
     });
 
-    await app.start();
-    this.app = app;
-    this.logger.log('Slack adapter connected (Socket Mode)');
+    try {
+      await app.start();
+      this.app = app;
+      this.logger.log('Slack adapter connected (Socket Mode)');
+    } catch (err) {
+      this.logger.error('Slack adapter failed to start — adapter disabled', err as Error);
+      return;
+    }
   }
 
   async onModuleDestroy(): Promise<void> {

@@ -3,6 +3,11 @@ import { CardBlock, CardSpec, OutboundReply } from '../channel.types';
 // Lark card header templates are named colors, not hex.
 const KNOWN_TEMPLATES = new Set(['blue', 'wathet', 'turquoise', 'green', 'yellow', 'orange', 'red', 'carmine', 'violet', 'purple', 'indigo', 'grey']);
 
+// Guards future CardBlock extensions at compile time.
+function assertNever(x: never): never {
+  throw new Error(`Unhandled CardBlock type: ${JSON.stringify(x)}`);
+}
+
 function renderElement(block: CardBlock): unknown {
   switch (block.type) {
     case 'note':
@@ -31,6 +36,8 @@ function renderElement(block: CardBlock): unknown {
           },
         ],
       };
+    default:
+      return assertNever(block);
   }
 }
 

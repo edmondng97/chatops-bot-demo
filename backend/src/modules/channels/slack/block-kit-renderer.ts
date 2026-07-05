@@ -10,6 +10,11 @@ const COLOR_MAP: Record<string, string> = {
 };
 const DEFAULT_COLOR = '#616061';
 
+// Guards future CardBlock extensions at compile time.
+function assertNever(x: never): never {
+  throw new Error(`Unhandled CardBlock type: ${JSON.stringify(x)}`);
+}
+
 function renderBlock(block: CardBlock): unknown {
   switch (block.type) {
     case 'note':
@@ -39,6 +44,8 @@ function renderBlock(block: CardBlock): unknown {
           placeholder: { type: 'plain_text', text: block.placeholder },
         },
       };
+    default:
+      return assertNever(block);
   }
 }
 
