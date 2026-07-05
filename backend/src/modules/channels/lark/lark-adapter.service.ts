@@ -23,25 +23,11 @@ export class LarkAdapterService implements OnModuleInit {
     }
 
     const client = new Lark.Client({ appId, appSecret });
-    // onReady/onError let us await the actual first-handshake outcome, since WSClient#start()
-    // itself resolves immediately without waiting for the connection. Note: the SDK defaults to
-    // infinite auto-reconnect, so onError never fires for a purely transient network failure —
-    // the timeout below bounds startup instead of hanging Nest bootstrap forever.
-    const connected = new Promise<void>((resolve, reject) => {
-      const wsClient = new Lark.WSClient({
-        appId,
-        appSecret,
-        onReady: () => resolve(),
-        onError: (err) => reject(err),
-      });
-      this.startWs(wsClient, client);
-    });
-    const timeout = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('Lark WebSocket handshake timed out')), 15_000),
-    );
-
-    try {
-      await Promise.race([connected, timeout]);
+    let registered = false;
+    let timedOut = false;
+    const registerPush = () => {
+      if (registered) return;
+      registered = true;
       this.pushRegistry.register('lark', async (ref, reply) => {
         const { msgType, content } = toLarkMessage(reply);
         await client.im.v1.message.reply({
@@ -49,7 +35,40 @@ export class LarkAdapterService implements OnModuleInit {
           data: { msg_type: msgType, content },
         });
       });
-      this.logger.log('Lark adapter connected (WebSocket long connection)');
+      this.logger.log(
+        timedOut
+          ? 'Lark WS became ready after startup timeout — push handler registered late'
+          : 'Lark adapter connected (WebSocket long connection)',
+      );
+    };
+
+    // onReady/onError let us await the actual first-handshake outcome, since WSClient#start()
+    // itself resolves immediately without waiting for the connection. Note: the SDK defaults to
+    // infinite auto-reconnect, so onError never fires for a purely transient network failure —
+    // the timeout below bounds startup instead of hanging Nest bootstrap forever. A handshake
+    // that completes AFTER the timeout still registers (via onReady below), just later and with
+    // a distinct log line, so proactive push isn't silently lost until a restart.
+    const connected = new Promise<void>((resolve, reject) => {
+      const wsClient = new Lark.WSClient({
+        appId,
+        appSecret,
+        onReady: () => {
+          registerPush();
+          resolve();
+        },
+        onError: (err) => reject(err),
+      });
+      this.startWs(wsClient, client);
+    });
+    const timeout = new Promise<never>((_, reject) =>
+      setTimeout(() => {
+        timedOut = true;
+        reject(new Error('gave up waiting for Lark WebSocket handshake (may still connect later)'));
+      }, 15_000),
+    );
+
+    try {
+      await Promise.race([connected, timeout]);
     } catch (err) {
       this.logger.error('Lark adapter failed to start — adapter disabled', err as Error);
     }
