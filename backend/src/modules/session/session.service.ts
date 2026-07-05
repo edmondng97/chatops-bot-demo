@@ -13,18 +13,34 @@ import { SessionDoc } from './session.schema';
 export class SessionService {
   constructor(@InjectModel(SessionDoc.name) private readonly model: Model<SessionDoc>) {}
 
+  // Hand-builds a domain Session from a lean doc, keeping Mongo internals (_id, __v) out of it.
+  private toSession(doc: SessionDoc): Session {
+    return {
+      threadKey: doc.threadKey,
+      channel: doc.channel as ChannelKind,
+      threadRef: doc.threadRef as ThreadRef,
+      command: doc.command,
+      state: doc.state as SessionState,
+      locale: doc.locale as Locale,
+      stepIndex: doc.stepIndex,
+      collected: doc.collected,
+      updatedAt: doc.updatedAt,
+      nagSentAt: doc.nagSentAt,
+    };
+  }
+
   async upsert(threadKey: string, command: string, locale: Locale, channel: ChannelKind, threadRef: ThreadRef): Promise<Session> {
     const doc = await this.model.findOneAndUpdate(
       { threadKey },
       { $setOnInsert: { threadKey, command, locale, channel, threadRef, state: 'ACTIVE', stepIndex: 0, collected: {}, updatedAt: Date.now() } },
       { new: true, upsert: true },
     ).lean();
-    return doc as unknown as Session;
+    return this.toSession(doc as SessionDoc);
   }
 
   async get(threadKey: string): Promise<Session | undefined> {
     const doc = await this.model.findOne({ threadKey }).lean();
-    return (doc ?? undefined) as Session | undefined;
+    return doc ? this.toSession(doc as SessionDoc) : undefined;
   }
 
   async save(session: Session): Promise<void> {
@@ -42,7 +58,8 @@ export class SessionService {
   }
 
   async findIdle(state: SessionState, idleMs: number, now: number): Promise<Session[]> {
-    return (await this.model.find({ state, updatedAt: { $lte: now - idleMs } }).lean()) as unknown as Session[];
+    const docs = await this.model.find({ state, updatedAt: { $lte: now - idleMs } }).lean();
+    return docs.map((doc) => this.toSession(doc as SessionDoc));
   }
 
   async markNagged(threadKey: string, now: number): Promise<void> {

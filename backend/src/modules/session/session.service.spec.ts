@@ -46,6 +46,15 @@ describe('SessionService (mongo)', () => {
     expect(await svc.findIdle('AWAITING_FEEDBACK', 2 * 60 * 60 * 1000, Date.now())).toEqual([]);
   });
 
+  it('get() result JSON-round-trips and can still be saved', async () => {
+    const s = await svc.upsert('t5', 'diagnose', 'en', 'slack', ref);
+    const roundTripped = JSON.parse(JSON.stringify(s));
+    roundTripped.collected.env = 'prod';
+    await svc.save(roundTripped);
+    const got = await svc.get('t5');
+    expect(got?.collected.env).toBe('prod');
+  });
+
   it('markNagged stamps nagSentAt', async () => {
     await svc.upsert('t4', 'diagnose', 'en', 'slack', ref);
     await svc.markNagged('t4', 123);
