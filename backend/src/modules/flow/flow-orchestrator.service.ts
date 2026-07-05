@@ -1,14 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { FlowConfig } from '../../interfaces/flow';
-import { Session } from '../../interfaces/session';
+import { ChannelKind, Session, ThreadRef } from '../../interfaces/session';
 import { SessionService } from '../session/session.service';
-import { WorkerService } from '../worker/worker.service';
+import { InvestigationQueueService } from '../queue/investigation.queue';
 import { FlowRegistryService } from './flow-registry.service';
 import { StepEngineService } from './step-engine.service';
 import { CardSpec } from './card.types';
 
 export interface InboundMessage {
   threadKey: string;
+  channel: ChannelKind;
+  threadRef: ThreadRef;
   text?: string;
   action?: Record<string, unknown>;
 }
@@ -21,15 +23,15 @@ export class FlowOrchestratorService {
     private readonly registry: FlowRegistryService,
     private readonly steps: StepEngineService,
     private readonly sessions: SessionService,
-    private readonly worker: WorkerService,
+    private readonly queue: InvestigationQueueService,
   ) {}
 
   async handle(input: InboundMessage): Promise<OutboundReply> {
-    const existing = this.sessions.get(input.threadKey);
+    const existing = await this.sessions.get(input.threadKey);
 
     // 0. Explicit close action → terminate session (no-op if it does not exist).
     if (input.action && input.action.type === 'close') {
-      this.sessions.close(input.threadKey);
+      await this.sessions.close(input.threadKey);
       return { kind: 'text', text: existing?.locale === 'en' ? 'Session closed.' : '会话已关闭。' };
     }
 
@@ -37,7 +39,7 @@ export class FlowOrchestratorService {
     if (!existing || existing.state === 'CLOSED') {
       const matched = input.text ? this.registry.match(input.text) : undefined;
       if (!matched) return { kind: 'text', text: 'Unknown command. Try: diagnose / 诊断' };
-      const session = this.sessions.upsert(input.threadKey, matched.config.command, matched.locale);
+      const session = await this.sessions.upsert(input.threadKey, matched.config.command, matched.locale, input.channel, input.threadRef);
       return this.renderStep(matched.config, session);
     }
 
@@ -50,37 +52,41 @@ export class FlowOrchestratorService {
       const stepId = String(input.action.stepId);
       existing.collected[stepId] = input.action.value;
       existing.stepIndex += 1;
-      this.sessions.save(existing);
+      await this.sessions.save(existing);
       if (existing.stepIndex < config.steps.length) return this.renderStep(config, existing);
       // Wizard finished — enter conversation (conversational policy).
       return { kind: 'text', text: existing.locale === 'en' ? 'Ready. Describe the issue.' : '准备就绪，请描述问题。' };
     }
 
-    // 3. Free text after wizard → dispatch to worker.
+    // 3. Free text after wizard → enqueue investigation, acknowledge asynchronously.
     if (input.text && existing.stepIndex >= config.steps.length) {
-      const out = await this.worker.run({
-        skill: config.worker.skill,
+      if (existing.state === 'INVESTIGATING') {
+        return { kind: 'text', text: existing.locale === 'en' ? 'Investigation in progress — please wait for the report in this thread.' : '调查进行中——请等待本主题内的报告。' };
+      }
+      await this.queue.enqueue({
+        threadKey: existing.threadKey,
+        channel: existing.channel,
+        threadRef: existing.threadRef,
         locale: existing.locale,
+        skill: config.worker.skill,
         collected: existing.collected,
-        prompt: input.text,
+        issue: input.text, claudeSessionId: existing.claudeSessionId,
       });
-      // Report delivered — session now awaits the user's feedback on the diagnosis.
-      existing.state = 'AWAITING_FEEDBACK';
-      this.sessions.save(existing);
-      return { kind: 'text', text: out.result };
+      await this.sessions.setState(existing.threadKey, 'INVESTIGATING');
+      return { kind: 'text', text: existing.locale === 'en' ? 'Investigating… I will reply in this thread.' : '调查中…结果会回复在本主题内。' };
     }
 
     // 4. Mid-wizard free text → re-render current step.
     return this.renderStep(config, existing);
   }
 
-  private renderStep(config: FlowConfig, session: Session): OutboundReply {
+  private async renderStep(config: FlowConfig, session: Session): Promise<OutboundReply> {
     let idx = session.stepIndex;
     while (idx < config.steps.length && !this.steps.shouldRender(config.steps[idx], session.collected)) {
       idx += 1;
     }
     session.stepIndex = idx;
-    this.sessions.save(session);
+    await this.sessions.save(session);
     if (idx >= config.steps.length) {
       return { kind: 'text', text: session.locale === 'en' ? 'Ready. Describe the issue.' : '准备就绪，请描述问题。' };
     }

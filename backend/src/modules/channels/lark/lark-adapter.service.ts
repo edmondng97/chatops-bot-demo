@@ -1,5 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import * as Lark from '@larksuiteoapi/node-sdk';
+import { ChannelPushRegistry } from '../channel-push.registry';
 import { FlowOrchestratorService, OutboundReply } from '../../flow/flow-orchestrator.service';
 import { toLarkMessage } from './lark-card-renderer';
 import { LarkInbound, mapLarkCardAction, mapLarkMessage } from './lark-inbound';
@@ -8,9 +9,12 @@ import { LarkInbound, mapLarkCardAction, mapLarkMessage } from './lark-inbound';
 export class LarkAdapterService implements OnModuleInit {
   private readonly logger = new Logger(LarkAdapterService.name);
 
-  constructor(private readonly orchestrator: FlowOrchestratorService) {}
+  constructor(
+    private readonly orchestrator: FlowOrchestratorService,
+    private readonly pushRegistry: ChannelPushRegistry,
+  ) {}
 
-  onModuleInit(): void {
+  async onModuleInit(): Promise<void> {
     const appId = process.env.LARK_APP_ID;
     const appSecret = process.env.LARK_APP_SECRET;
     if (!appId || !appSecret) {
@@ -19,8 +23,58 @@ export class LarkAdapterService implements OnModuleInit {
     }
 
     const client = new Lark.Client({ appId, appSecret });
-    const wsClient = new Lark.WSClient({ appId, appSecret });
+    let registered = false;
+    let timedOut = false;
+    const registerPush = () => {
+      if (registered) return;
+      registered = true;
+      this.pushRegistry.register('lark', async (ref, reply) => {
+        const { msgType, content } = toLarkMessage(reply);
+        await client.im.v1.message.reply({
+          path: { message_id: ref.replyTo },
+          data: { msg_type: msgType, content },
+        });
+      });
+      this.logger.log(
+        timedOut
+          ? 'Lark WS became ready after startup timeout — push handler registered late'
+          : 'Lark adapter connected (WebSocket long connection)',
+      );
+    };
 
+    // onReady/onError let us await the actual first-handshake outcome, since WSClient#start()
+    // itself resolves immediately without waiting for the connection. Note: the SDK defaults to
+    // infinite auto-reconnect, so onError never fires for a purely transient network failure —
+    // the timeout below bounds startup instead of hanging Nest bootstrap forever. A handshake
+    // that completes AFTER the timeout still registers (via onReady below), just later and with
+    // a distinct log line, so proactive push isn't silently lost until a restart.
+    const connected = new Promise<void>((resolve, reject) => {
+      const wsClient = new Lark.WSClient({
+        appId,
+        appSecret,
+        onReady: () => {
+          registerPush();
+          resolve();
+        },
+        onError: (err) => reject(err),
+      });
+      this.startWs(wsClient, client);
+    });
+    const timeout = new Promise<never>((_, reject) =>
+      setTimeout(() => {
+        timedOut = true;
+        reject(new Error('gave up waiting for Lark WebSocket handshake (may still connect later)'));
+      }, 15_000),
+    );
+
+    try {
+      await Promise.race([connected, timeout]);
+    } catch (err) {
+      this.logger.error('Lark adapter failed to start — adapter disabled', err as Error);
+    }
+  }
+
+  private startWs(wsClient: Lark.WSClient, client: Lark.Client): void {
     const handle = async (inbound: LarkInbound | null) => {
       if (!inbound) return;
       let reply: OutboundReply;
@@ -53,6 +107,5 @@ export class LarkAdapterService implements OnModuleInit {
         },
       } as never),
     });
-    this.logger.log('Lark adapter connected (WebSocket long connection)');
   }
 }

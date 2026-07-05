@@ -9,7 +9,7 @@ describe('mapLarkMessage', () => {
         ...base,
         message: { message_id: 'm1', chat_id: 'c1', message_type: 'text', content: '{"text":"diagnose"}' },
       }),
-    ).toEqual({ threadKey: 'm1', text: 'diagnose', replyTo: 'm1' });
+    ).toEqual({ threadKey: 'm1', channel: 'lark', threadRef: { replyTo: 'm1' }, text: 'diagnose', replyTo: 'm1' });
   });
 
   it('uses root_id for threaded replies', () => {
@@ -18,7 +18,7 @@ describe('mapLarkMessage', () => {
         ...base,
         message: { message_id: 'm2', root_id: 'm1', chat_id: 'c1', message_type: 'text', content: '{"text":"hi"}' },
       }),
-    ).toEqual({ threadKey: 'm1', text: 'hi', replyTo: 'm2' });
+    ).toEqual({ threadKey: 'm1', channel: 'lark', threadRef: { replyTo: 'm2' }, text: 'hi', replyTo: 'm2' });
   });
 
   it('strips @mention placeholders from text', () => {
@@ -55,6 +55,8 @@ describe('mapLarkCardAction', () => {
       }),
     ).toEqual({
       threadKey: 'm1',
+      channel: 'lark',
+      threadRef: { replyTo: 'm9' },
       action: { stepId: 'env', tk: 'm1', namespace: 'wizard', value: 'prod' },
       replyTo: 'm9',
     });
@@ -68,6 +70,8 @@ describe('mapLarkCardAction', () => {
       }),
     ).toEqual({
       threadKey: 'm1',
+      channel: 'lark',
+      threadRef: { replyTo: 'm9' },
       action: { stepId: 'svc', tk: 'm1', namespace: 'wizard', value: 'api-gw' },
       replyTo: 'm9',
     });

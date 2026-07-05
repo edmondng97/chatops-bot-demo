@@ -1,5 +1,6 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { App } from '@slack/bolt';
+import { ChannelPushRegistry } from '../channel-push.registry';
 import { FlowOrchestratorService, OutboundReply } from '../../flow/flow-orchestrator.service';
 import { toSlackMessage } from './block-kit-renderer';
 import { mapSlackAction, mapSlackMessage } from './slack-inbound';
@@ -9,7 +10,10 @@ export class SlackAdapterService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(SlackAdapterService.name);
   private app?: App;
 
-  constructor(private readonly orchestrator: FlowOrchestratorService) {}
+  constructor(
+    private readonly orchestrator: FlowOrchestratorService,
+    private readonly pushRegistry: ChannelPushRegistry,
+  ) {}
 
   async onModuleInit(): Promise<void> {
     const token = process.env.SLACK_BOT_TOKEN;
@@ -67,6 +71,9 @@ export class SlackAdapterService implements OnModuleInit, OnModuleDestroy {
     try {
       await app.start();
       this.app = app;
+      this.pushRegistry.register('slack', async (ref, reply) => {
+        await app.client.chat.postMessage({ channel: ref.channel, thread_ts: ref.threadTs, ...toSlackMessage(reply) });
+      });
       this.logger.log('Slack adapter connected (Socket Mode)');
     } catch (err) {
       this.logger.error('Slack adapter failed to start — adapter disabled', err as Error);

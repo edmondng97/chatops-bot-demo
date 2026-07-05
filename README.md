@@ -88,7 +88,39 @@ npm test
 
 To view the frontend, just open `frontend/index.html` in a browser — no build, no server.
 
-### 6. Add a new capability (no routing/lifecycle changes)
+### 6. Run with real infrastructure
+
+By default the backend runs entirely in memory (no Mongo/Redis needed). To exercise the real
+session-persistence and queue path instead:
+
+```bash
+# 1. Start Mongo + Redis
+docker compose up -d
+
+# 2. Start the backend against them
+cd backend
+npm run build && npm start
+```
+
+| Env var             | Default                             | Notes |
+|----------------------|--------------------------------------|-------|
+| `MONGO_URI`          | `mongodb://localhost:27018/chatops`  | matches the `mongo` service's mapped port |
+| `REDIS_HOST`         | `localhost`                          | |
+| `REDIS_PORT`         | `6380`                                | matches the `redis` service's mapped port |
+| `WORKER_TIMEOUT_MS`  | `300000`                              | max time to wait for the investigation worker |
+| `IDLE_MS`            | `7200000`                             | idle time before a session gets a nag |
+| `SWEEP_MS`           | `300000`                              | sweeper poll interval |
+
+> `IDLE_MS` and `SWEEP_MS` are read once at class load, so they must be set **before** the
+> process starts (e.g. `IDLE_MS=60000 SWEEP_MS=10000 npm start`) — changing them at runtime has
+> no effect.
+
+The investigation worker shells out to the `claude` CLI, so a logged-in Claude Code CLI must be
+on `PATH`; it runs read-only (`Read`/`Grep`/`Glob`) with the repo as its working directory.
+Session state is persisted in MongoDB, so it survives a backend restart — the same thread can
+resume mid-flow.
+
+### 7. Add a new capability (no routing/lifecycle changes)
 
 1. Drop a `backend/src/flows/<command>.json` (declares `triggers / closePolicy / worker.skill / steps[]`).
 2. Register it in `FlowRegistryService`'s `flows` array.
@@ -175,7 +207,36 @@ npm test
 
 查看前端：直接用浏览器打开 `frontend/index.html`——无需构建、无需服务器。
 
-### 6. 新增一个能力（无需改路由 / 生命周期）
+### 6. 用真实基础设施运行
+
+默认情况下后端全内存运行（不需要 Mongo/Redis）。如果想跑真实的 session 持久化 + 队列路径：
+
+```bash
+# 1. 启动 Mongo + Redis
+docker compose up -d
+
+# 2. 让后端连到它们
+cd backend
+npm run build && npm start
+```
+
+| 环境变量              | 默认值                                | 说明 |
+|----------------------|--------------------------------------|------|
+| `MONGO_URI`           | `mongodb://localhost:27018/chatops`  | 对应 `mongo` 服务映射出的端口 |
+| `REDIS_HOST`          | `localhost`                          | |
+| `REDIS_PORT`          | `6380`                                | 对应 `redis` 服务映射出的端口 |
+| `WORKER_TIMEOUT_MS`   | `300000`                              | 等待 investigation worker 的最长时间 |
+| `IDLE_MS`             | `7200000`                             | session 触发提醒前的空闲时长 |
+| `SWEEP_MS`            | `300000`                              | 清扫器轮询间隔 |
+
+> `IDLE_MS` 与 `SWEEP_MS` 是类加载时读取一次的，必须在进程启动**之前**设置好（例如
+> `IDLE_MS=60000 SWEEP_MS=10000 npm start`）——运行时再改不会生效。
+
+Investigation worker 会拉起 `claude` CLI 子进程，因此需要一个已登录的 Claude Code CLI 在
+`PATH` 上；它以只读方式运行（`Read`/`Grep`/`Glob`），工作目录是本仓库。session 状态持久化在
+MongoDB 里，所以后端重启后能存活——同一个线程可以从中断处继续。
+
+### 7. 新增一个能力（无需改路由 / 生命周期）
 
 1. 放一份 `backend/src/flows/<command>.json`（声明 `triggers / closePolicy / worker.skill / steps[]`）。
 2. 在 `FlowRegistryService` 的 `flows` 数组里注册。
