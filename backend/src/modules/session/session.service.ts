@@ -65,4 +65,10 @@ export class SessionService {
   async markNagged(threadKey: string, now: number): Promise<void> {
     await this.model.updateOne({ threadKey }, { $set: { nagSentAt: now } });
   }
+
+  // Clears the nag stamp so the next idle period starts a fresh nag→close cycle
+  // (e.g. after delivering a new report into a session that was nagged before).
+  async clearNag(threadKey: string): Promise<void> {
+    await this.model.updateOne({ threadKey }, { $unset: { nagSentAt: 1 } });
+  }
 }

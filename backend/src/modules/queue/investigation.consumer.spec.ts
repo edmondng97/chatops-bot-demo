@@ -1,7 +1,7 @@
 import { InvestigationConsumer } from './investigation.consumer';
 
 describe('InvestigationConsumer.process', () => {
-  let sessions: { setState: jest.Mock };
+  let sessions: { setState: jest.Mock; clearNag: jest.Mock };
   let push: { push: jest.Mock };
   let runner: { run: jest.Mock };
   let consumer: InvestigationConsumer;
@@ -10,7 +10,7 @@ describe('InvestigationConsumer.process', () => {
   const okStdout = (result: string) => JSON.stringify({ session_id: 's1', result, is_error: false, subtype: 'success' });
 
   beforeEach(() => {
-    sessions = { setState: jest.fn().mockResolvedValue(undefined) };
+    sessions = { setState: jest.fn().mockResolvedValue(undefined), clearNag: jest.fn().mockResolvedValue(undefined) };
     push = { push: jest.fn().mockResolvedValue(undefined) };
     runner = { run: jest.fn() };
     consumer = new InvestigationConsumer(sessions as any, push as any, runner as any);
@@ -21,6 +21,7 @@ describe('InvestigationConsumer.process', () => {
     await consumer.process(job as any);
     expect(push.push).toHaveBeenCalledWith('slack', job.data.threadRef, expect.objectContaining({ kind: 'card' }));
     expect(sessions.setState).toHaveBeenCalledWith('t', 'AWAITING_FEEDBACK');
+    expect(sessions.clearNag).toHaveBeenCalledWith('t');
   });
 
   it('invalid card → repair with --resume once, then success', async () => {
@@ -40,6 +41,7 @@ describe('InvestigationConsumer.process', () => {
     expect(runner.run).toHaveBeenCalledTimes(3); // initial + MAX_REPAIR(2)
     expect(push.push).toHaveBeenCalledWith('slack', expect.anything(), expect.objectContaining({ kind: 'text' }));
     expect(sessions.setState).toHaveBeenCalledWith('t', 'AWAITING_FEEDBACK');
+    expect(sessions.clearNag).toHaveBeenCalledWith('t');
   });
 
   it('worker failure → error card, session back to ACTIVE', async () => {
@@ -54,5 +56,6 @@ describe('InvestigationConsumer.process', () => {
     push.push.mockRejectedValue(new Error('api down'));
     await expect(consumer.process(job as any)).resolves.toBeUndefined();
     expect(sessions.setState).toHaveBeenCalledWith('t', 'AWAITING_FEEDBACK');
+    expect(sessions.clearNag).toHaveBeenCalledWith('t');
   });
 });

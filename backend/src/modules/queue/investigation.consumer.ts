@@ -46,6 +46,7 @@ export class InvestigationConsumer extends WorkerHost {
       : { kind: 'text', text: result ?? '(empty result)' }; // degrade: never drop content
     await this.deliver(d, reply);
     await this.sessions.setState(d.threadKey, 'AWAITING_FEEDBACK');
+    await this.sessions.clearNag(d.threadKey);
   }
 
   private async deliver(d: InvestigationJob, reply: OutboundReply): Promise<void> {

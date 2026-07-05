@@ -60,4 +60,12 @@ describe('SessionService (mongo)', () => {
     await svc.markNagged('t4', 123);
     expect((await svc.get('t4'))?.nagSentAt).toBe(123);
   });
+
+  it('clearNag removes nagSentAt after markNagged', async () => {
+    await svc.upsert('t6', 'diagnose', 'en', 'slack', ref);
+    await svc.markNagged('t6', 456);
+    expect((await svc.get('t6'))?.nagSentAt).toBe(456);
+    await svc.clearNag('t6');
+    expect((await svc.get('t6'))?.nagSentAt).toBeUndefined();
+  });
 });
