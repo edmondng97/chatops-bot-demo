@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { FlowConfig } from '../../interfaces/flow';
 import { ChannelKind, Session, ThreadRef } from '../../interfaces/session';
 import { SessionService } from '../session/session.service';
-import { WorkerService } from '../worker/worker.service';
+import { InvestigationQueueService } from '../queue/investigation.queue';
 import { FlowRegistryService } from './flow-registry.service';
 import { StepEngineService } from './step-engine.service';
 import { CardSpec } from './card.types';
@@ -23,7 +23,7 @@ export class FlowOrchestratorService {
     private readonly registry: FlowRegistryService,
     private readonly steps: StepEngineService,
     private readonly sessions: SessionService,
-    private readonly worker: WorkerService,
+    private readonly queue: InvestigationQueueService,
   ) {}
 
   async handle(input: InboundMessage): Promise<OutboundReply> {
@@ -58,18 +58,19 @@ export class FlowOrchestratorService {
       return { kind: 'text', text: existing.locale === 'en' ? 'Ready. Describe the issue.' : '准备就绪，请描述问题。' };
     }
 
-    // 3. Free text after wizard → dispatch to worker.
+    // 3. Free text after wizard → enqueue investigation, acknowledge asynchronously.
     if (input.text && existing.stepIndex >= config.steps.length) {
-      const out = await this.worker.run({
-        skill: config.worker.skill,
+      await this.queue.enqueue({
+        threadKey: existing.threadKey,
+        channel: existing.channel,
+        threadRef: existing.threadRef,
         locale: existing.locale,
+        skill: config.worker.skill,
         collected: existing.collected,
-        prompt: input.text,
+        issue: input.text,
       });
-      // Report delivered — session now awaits the user's feedback on the diagnosis.
-      existing.state = 'AWAITING_FEEDBACK';
-      await this.sessions.save(existing);
-      return { kind: 'text', text: out.result };
+      await this.sessions.setState(existing.threadKey, 'INVESTIGATING');
+      return { kind: 'text', text: existing.locale === 'en' ? 'Investigating… I will reply in this thread.' : '调查中…结果会回复在本主题内。' };
     }
 
     // 4. Mid-wizard free text → re-render current step.
