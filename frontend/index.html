@@ -96,14 +96,14 @@
       <svg viewBox="0 0 760 240" width="100%" role="img" aria-label="broker/worker 两层架构图">
         <g id="n-im" class="arch-node">
           <rect x="20" y="90" width="150" height="64" rx="10" fill="var(--bg-soft)" stroke="rgba(255,255,255,0.2)"/>
-          <text id="t-im-1" x="95" y="118" fill="#ececf1" font-size="13" text-anchor="middle">Chat 入口</text>
-          <text id="t-im-2" x="95" y="138" fill="#8b8b99" font-size="11" text-anchor="middle">WebSocket</text>
+          <text id="t-im-1" x="95" y="118" fill="#ececf1" font-size="13" text-anchor="middle">Slack / Lark</text>
+          <text id="t-im-2" x="95" y="138" fill="#8b8b99" font-size="11" text-anchor="middle">WebSocket 长连接</text>
         </g>
         <path id="e1" d="M 170 122 H 250" pathLength="1" stroke="#2dd4bf" stroke-width="2" fill="none"/>
         <g id="n-broker" class="arch-node">
           <rect x="250" y="70" width="240" height="104" rx="10" fill="var(--bg-soft)" stroke="#2dd4bf"/>
           <text id="t-broker-1" x="370" y="102" fill="#2dd4bf" font-size="14" text-anchor="middle" font-weight="700">broker · 确定性门卫</text>
-          <text id="t-broker-2" x="370" y="126" fill="#8b8b99" font-size="11" text-anchor="middle">解析 / 路由 / 向导 / session</text>
+          <text id="t-broker-2" x="370" y="126" fill="#8b8b99" font-size="11" text-anchor="middle">解析 / 路由 / 向导 / Mongo session</text>
           <text id="t-broker-3" x="370" y="146" fill="#8b8b99" font-size="11" text-anchor="middle">无 LLM · 常驻进程</text>
         </g>
         <path id="e2" d="M 490 122 H 570" pathLength="1" stroke="#58a6ff" stroke-width="2" fill="none"/>
@@ -115,7 +115,7 @@
         </g>
       </svg>
       <div class="arch-notes">
-        <p class="arch-note" data-step="0"><strong>Chat 入口</strong> — 消息经 WebSocket 进来，按 threadKey 落到唯一 session。</p>
+        <p class="arch-note" data-step="0"><strong>Slack / Lark</strong> — 消息经 WebSocket 进来，按 threadKey 落到唯一 session。</p>
         <p class="arch-note" data-step="1"><strong>broker</strong> — 确定性门卫：解析、路由、向导、生命周期全包，一行 LLM 都没有。</p>
         <p class="arch-note" data-step="2"><strong>worker</strong> — 只有真正需要分析时才被拉起的子进程，跑完即退，崩了也不影响门卫。</p>
       </div>
@@ -179,7 +179,7 @@
       <p class="kicker" id="finaleKicker">06 — EXTEND · 收尾</p>
       <h2 class="finale-line" id="finaleLine">新增一个能力<br /><span class="eq mono">=</span> 一份 config <span class="plus mono">+</span> 一个 skill。</h2>
       <p class="hero-sub" id="finaleSub">内核不动，边界清晰。这就是确定性骨架的意义。</p>
-      <footer class="footer" id="finaleFooter">脱敏架构展示 · 仅用于技术演示，不含任何真实业务 / 凭证信息</footer>
+      <footer class="footer" id="finaleFooter">真实集成：Slack · Lark · MongoDB · BullMQ · Claude worker — 不含任何真实业务 / 凭证信息</footer>
     </div>
   </section>
 

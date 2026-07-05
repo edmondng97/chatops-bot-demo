@@ -76,16 +76,16 @@ const TRANSLATIONS = [
 
   { sel: '#arch .kicker', zh: '03 — ARCHITECTURE · 架构总览', en: '03 — ARCHITECTURE · Overview' },
   { sel: '#arch h2', zh: '常驻的门卫，短命的大脑。', en: 'A resident gatekeeper, a short-lived brain.' },
-  { sel: '#t-im-1', zh: 'Chat 入口', en: 'Chat Gateway', text: true },
-  { sel: '#t-im-2', zh: 'WebSocket', en: 'WebSocket', text: true },
+  { sel: '#t-im-1', zh: 'Slack / Lark', en: 'Slack / Lark', text: true },
+  { sel: '#t-im-2', zh: 'WebSocket 长连接', en: 'WebSocket (persistent)', text: true },
   { sel: '#t-broker-1', zh: 'broker · 确定性门卫', en: 'broker · deterministic gatekeeper', text: true },
-  { sel: '#t-broker-2', zh: '解析 / 路由 / 向导 / session', en: 'parse / route / wizard / session', text: true },
+  { sel: '#t-broker-2', zh: '解析 / 路由 / 向导 / Mongo session', en: 'parse / route / wizard / Mongo session', text: true },
   { sel: '#t-broker-3', zh: '无 LLM · 常驻进程', en: 'no LLM · resident process', text: true },
   { sel: '#t-queue', zh: 'queue', en: 'queue', text: true },
   { sel: '#t-worker-1', zh: 'worker · 纯大脑', en: 'worker · pure brain', text: true },
   { sel: '#t-worker-2', zh: '短命子进程 · 跑完即退', en: 'short-lived subprocess · exits when done', text: true },
-  { sel: '.arch-note[data-step="0"]', zh: '<strong>Chat 入口</strong> — 消息经 WebSocket 进来，按 threadKey 落到唯一 session。',
-    en: '<strong>Chat Gateway</strong> — messages arrive over WebSocket and land on a unique session by threadKey.' },
+  { sel: '.arch-note[data-step="0"]', zh: '<strong>Slack / Lark</strong> — 消息经 WebSocket 长连接进来，按 threadKey 落到唯一 session。',
+    en: '<strong>Slack / Lark</strong> — messages arrive over persistent WebSockets and land on a unique session by threadKey.' },
   { sel: '.arch-note[data-step="1"]', zh: '<strong>broker</strong> — 确定性门卫：解析、路由、向导、生命周期全包，一行 LLM 都没有。',
     en: '<strong>broker</strong> — the deterministic gatekeeper: parsing, routing, wizards, lifecycle — all covered, zero lines of LLM.' },
   { sel: '.arch-note[data-step="2"]', zh: '<strong>worker</strong> — 只有真正需要分析时才被拉起的子进程，跑完即退，崩了也不影响门卫。',
@@ -143,8 +143,8 @@ const TRANSLATIONS = [
   { sel: '#finaleLine', zh: '新增一个能力<br /><span class="eq mono">=</span> 一份 config <span class="plus mono">+</span> 一个 skill。',
     en: 'A new capability<br /><span class="eq mono">=</span> one config <span class="plus mono">+</span> one skill.' },
   { sel: '#finaleSub', zh: '内核不动，边界清晰。这就是确定性骨架的意义。', en: 'The internals never move, the boundaries stay clean. That is the point of a deterministic skeleton.' },
-  { sel: '#finaleFooter', zh: '脱敏架构展示 · 仅用于技术演示，不含任何真实业务 / 凭证信息',
-    en: 'Desensitized architecture showcase · for technical demonstration only, no real business data or credentials' },
+  { sel: '#finaleFooter', zh: '真实集成：Slack · Lark · MongoDB · BullMQ · Claude worker — 不含任何真实业务 / 凭证信息',
+    en: 'Real integrations: Slack · Lark · MongoDB · BullMQ · Claude worker — no real business data or credentials' },
 ];
 
 const NAV_LINKS = [
